@@ -1,6 +1,6 @@
-# Laboratorium 1 - Badanie sposobów odczytu pliku- 
+# Laboratorium 1 - Badanie sposobów odczytu pliku
 
-- [Laboratorium 1 - Badanie sposobów odczytu pliku-](#laboratorium-1---badanie-sposobów-odczytu-pliku-)
+- [Laboratorium 1 - Badanie sposobów odczytu pliku](#laboratorium-1---badanie-sposobów-odczytu-pliku)
   - [Strategie czytania pliku](#strategie-czytania-pliku)
   - [Operacja na wczytanych danych](#operacja-na-wczytanych-danych)
   - [Pomiar czasu](#pomiar-czasu)
