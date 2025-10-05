@@ -36,6 +36,7 @@ Implementacja algorytmu jest poza zakresem tego laboratorium, więc można skorz
 ## Pomiar czasu
 W ramach projektu interesuje nas pomiar czasu operacji wczytania całego pliku oraz obliczenia funkcji MD5.
 Operacje tworzenia zasobów (otwierania pliku lub mapowania go do pamięci dzielonej) można pominąć.
+Za pomocą funkcji `clock_gettime()` można uzyskać pomiar czasu z dokładnością do nanosekund.
 
 Ostatecznie program powinien wypisać na standardowe wyjście 4 pomiary i 4 hashe:
 1. Sekwencyjny odczyt za pomocą funkcji `read()`
@@ -62,3 +63,4 @@ Na laboratorium nr 3 wykonamy test wybranych programów na trzech różnych tech
   * `munmap(3p)`
   * `msync(3p)`
   * `sys_mman.h(0p)`
+  * `clock_gettime(3p)`
