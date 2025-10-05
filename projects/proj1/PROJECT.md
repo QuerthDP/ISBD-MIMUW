@@ -1,4 +1,12 @@
-# Laboratorium 1 - Badanie sposobów odczytu pliku
+# Laboratorium 1 - Badanie sposobów odczytu pliku- 
+
+- [Laboratorium 1 - Badanie sposobów odczytu pliku-](#laboratorium-1---badanie-sposobów-odczytu-pliku-)
+  - [Strategie czytania pliku](#strategie-czytania-pliku)
+  - [Operacja na wczytanych danych](#operacja-na-wczytanych-danych)
+  - [Pomiar czasu](#pomiar-czasu)
+  - [Różne technologie dyskowe](#różne-technologie-dyskowe)
+  - [Materiały do przeczytania](#materiały-do-przeczytania)
+
 
 Celem laboratorium jest zbadanie dwóch sposobów odczytu do pliku
 * strumieniowe (`read(2)`),
