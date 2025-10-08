@@ -30,11 +30,12 @@ Poniżej można zobaczyć wizualizacje czytania plików powyższymi strategiami 
 
 ## Operacja na wczytanych danych
 
-Aby upewnić się, że dane zostały wczytane prawidłowo program powinien wyliczyć hash MD5 z pliku wczytanego każdą strategią i sposobem.
+Aby upewnić się, że dane zostały wczytane prawidłowo program powinien wyliczyć hash CRC64 z pliku wczytanego każdą strategią i sposobem.
+Funkcja skrótu jest przemienna, więc suma powinna zgadzać się dla każdej strategii odczytu.
 Implementacja algorytmu jest poza zakresem tego laboratorium, więc można skorzystać z wybranej implementacji algorytmu z internetu (oczywiście proszę uważać na licencję!)
 
 ## Pomiar czasu
-W ramach projektu interesuje nas pomiar czasu operacji wczytania całego pliku oraz obliczenia funkcji MD5.
+W ramach projektu interesuje nas pomiar czasu operacji wczytania całego pliku oraz obliczenia funkcji CRC64.
 Operacje tworzenia zasobów (otwierania pliku lub mapowania go do pamięci dzielonej) można pominąć.
 Za pomocą funkcji `clock_gettime()` można uzyskać pomiar czasu z dokładnością do nanosekund.
 
@@ -43,6 +44,8 @@ Ostatecznie program powinien wypisać na standardowe wyjście 4 pomiary i 4 hash
 2. Losowy odczyt za pomocą funkcji `read()`
 3. Sekwencyjny odczyt z mapowanego pliku za pomącą funkcji `mmap()`
 4. Losowy odczyt z mapowanego pliku za pomącą funkcji `mmap()`
+
+Program powinien być w stanie przeczytać plik o rozmiarze większym niż dostępna pamięć operacyjna.
 
 *Hint: polecam stworzyć pliki różnej wielkości do testowania programu*
 
