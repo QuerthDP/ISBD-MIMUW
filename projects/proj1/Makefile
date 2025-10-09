@@ -2,7 +2,7 @@
 
 BUILD_DIR := build
 
-MAKEFLAGS += --no-print-directory
+MAKEFLAGS += --silent --no-print-directory
 
 .PHONY: all clean run
 
@@ -12,7 +12,10 @@ all:
 	@$(MAKE) -C $(BUILD_DIR)
 
 run: all generate-files
-	@./$(BUILD_DIR)/file_reader
+	@for file in $(filter-out $@,$(MAKECMDGOALS)); do \
+			echo "Running ./$(BUILD_DIR)/file_reader $$file"; \
+			./$(BUILD_DIR)/file_reader $$file; \
+		done
 
 generate-files:
 	@mkdir -p test_files
