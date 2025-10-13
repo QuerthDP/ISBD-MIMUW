@@ -4,6 +4,8 @@ BUILD_DIR := build
 
 MAKEFLAGS += --silent --no-print-directory
 
+CFLAGS := -Wall -Wextra -Werror -Wpedantic -Wshadow -Wformat=2 -Wfloat-equal -Wconversion -Wsign-conversion
+
 .PHONY: all clean run
 
 all:
