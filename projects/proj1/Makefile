@@ -21,9 +21,9 @@ run: all generate-files
 
 generate-files:
 	@mkdir -p test_files
-	@python3 generate_file.py test_files/file_small 1024    # 1KB
-	@python3 generate_file.py test_files/file_medium 102400 # 100KB
-	@python3 generate_file.py test_files/file_large 1048576 # 1MB
+	@python3 generate_file.py test_files/file_small 102400      # 100KB
+	@python3 generate_file.py test_files/file_medium 104857600  # 100MB
+	@python3 generate_file.py test_files/file_large 10737418240 # 10GB
 
 clean:
 	@$(MAKE) -C $(BUILD_DIR) clean || true

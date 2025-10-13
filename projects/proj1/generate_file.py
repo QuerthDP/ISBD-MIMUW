@@ -2,8 +2,16 @@ import sys
 import os
 
 def generate_random_file(filename, length):
+    if os.path.exists(filename):
+        print(f"File '{filename}' already exists.")
+        return
+    batch_size = 100 * 1024 * 1024  # 100MB
+    written = 0
     with open(filename, 'wb') as f:
-        f.write(os.urandom(length))
+        while written < length:
+            to_write = min(batch_size, length - written)
+            f.write(os.urandom(to_write))
+            written += to_write
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
