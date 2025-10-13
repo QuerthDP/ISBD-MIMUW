@@ -9,13 +9,15 @@
 #include "timer.h"
 
 int main() {
-    struct timespec start_ts, ts;
+    struct Timer timer;
+    reset_timer(&timer);
 
-    start_timer(&start_ts);
+    start_timer(&timer);
 
     sleep(5);
 
-    read_timer(&start_ts, &ts);
+    stop_timer(&timer);
+    read_timer(&timer);
 
     return 0;
 }

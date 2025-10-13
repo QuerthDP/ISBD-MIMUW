@@ -8,6 +8,17 @@
 #pragma once
 
 #include <time.h>
+#include <stdbool.h>
 
-void start_timer(struct timespec* ts);
-void read_timer(struct timespec* ts_start, struct timespec* ts_end);
+struct Timer {
+    struct timespec start;
+    struct timespec end;
+    time_t total_sec;
+    long total_usec;
+    bool running;
+};
+
+void start_timer(struct Timer* timer);
+void stop_timer(struct Timer* timer);
+void reset_timer(struct Timer* timer);
+void read_timer(const struct Timer* timer);
