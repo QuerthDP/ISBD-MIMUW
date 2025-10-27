@@ -15,7 +15,7 @@ Celem laboratorium jest przygotowanie własnego formatu pliku, który będzie s�
 Zaproponowany format powinien wspierać następujące funkcje:
 * Przechowywanie dowolnej ilości kolumn
 * Kolumny mają dwa dozwolone typy: 64-bitowa liczba całkowita ze znakiem oraz napis dowolnej długości (VARCHAR)
-* Format pliku powinien wspierać kompresję.
+* Format pliku powinien wspierać kompresję (int64 powinien uzywac VLE oraz delta encoding, a VARCHAR kolumna ZTSD albo LZ4).
 * Dane w pliku powinny być tabelaryczne (tzn. każda kolumna w pliku ma taka samą długość)
 
 ## Serializator i deserializator
@@ -43,3 +43,9 @@ Warto także napisać program, który wykonuje operację serializacji.
 * [Delta int encoding](https://en.wikipedia.org/wiki/Delta_encoding)
 * [LZ4](https://github.com/lz4/lz4)
 * [ZTSD](https://github.com/facebook/zstd)
+
+
+TODO: 
+1. Schematy testowania
+2. Tor przetwarzania programu zaliczeniowego
+3. Odnosnik Parquet 
