@@ -1,0 +1,522 @@
+openapi: '3.0.3'
+info:
+  title: MIMUW ISBD database system
+  description: |-
+    This file describes interface between DBMS system and user.
+  version: 1.0.0
+tags:
+  - name: schema
+    description: Endpoints used to access schema structure
+  - name: execution
+    description: Endpoints used to control query execution
+  - name: proj3
+    description: Endpoint to implement in project 3
+  - name: proj4
+    description: Endpoint to implement in project 4
+
+paths:
+
+  /tables:
+    get:
+      summary: Get list of tables with their accompaning IDs. Use those IDs to get details by calling /table endpoint.
+      operationId: getTables
+      tags:
+        - schema
+        - proj3
+      responses:
+        200:
+          description: Array of tables
+          $ref: "#/components/responses/GetTablesResponse"
+
+  /table/{tableId}:
+    get:
+      summary: Get detailed description of selected table
+      operationId: getTableById
+      parameters:
+        - $ref: "#/components/parameters/TableID"
+      tags:
+        - schema
+        - proj3
+      responses:
+        200:
+          description: Detailed description of selected table
+          $ref: "#/components/responses/GetTableResponse"
+        404:
+          description: Couldn't find a table of given ID
+          $ref: "#/components/responses/Error"
+
+
+    delete:
+      summary: Delete selected table from database
+      operationId: deleteTable
+      parameters:
+        - $ref: "#/components/parameters/TableID"
+      tags:
+        - schema
+        - proj3
+      responses:
+        200:
+          description: Table has been deleted successfully
+        404:
+          description: Couldn't find a table of given ID
+          $ref: "#/components/responses/Error"
+      
+  /table:
+    put:
+      summary: Create new table in database
+      operationId: createTable
+      tags:
+        - schema
+        - proj3
+      requestBody:
+        $ref: "#/components/requestBodies/CreateTableRequest"
+      responses:
+        200:
+          description: Table has been created successfully
+          $ref: "#/components/responses/TableCreatedResponse"
+        400:
+          description: Cannot create a table due to problems in request (for example, invalid table schema)
+          $ref: "#/components/responses/MultipleProblemsError"
+        409:
+          description: Table cannot be created because of internal state of the system (for e.g. table of given name already exists)
+          $ref: "#/components/responses/MultipleProblemsError"
+  
+  /queries:
+    get:
+      tags:
+        - execution
+        - proj4
+
+  /query/{queryId}:
+    get:
+      tags:
+        - execution
+  /query
+    post:
+      tags:
+        - execution
+    
+  /result:
+    get:
+      tags:
+        - execution
+    
+    
+
+  /login:
+    post:
+      summary: Log into system
+      operationId: login
+      tags:
+        - login
+      requestBody:
+        $ref: "#/components/requestBodies/LoginRequestBody"
+      responses:
+        200:
+          $ref: "#/components/responses/LoginResponse"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+        default:
+          $ref: "#/components/responses/Error"
+
+  /host:
+    post:
+      tags:
+        - mgmt
+      summary: Register new host to controller
+      description: Register new host to controller
+      operationId: registerHost
+      requestBody:
+        $ref: "#/components/requestBodies/Host"
+      responses:
+        200:
+          $ref: "#/components/responses/HostResponse"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+        403:
+          $ref: "#/components/responses/ForbiddenError"
+        default:
+          $ref: "#/components/responses/Error"
+      security:
+        - mgmt_auth:
+            - admin
+
+  /host/list:
+    get:
+      tags:
+        - mgmt
+      summary: Get list of all registered hosts
+      description: Get list of all registered hosts
+      operationId: hostList
+      responses:
+        200:
+          $ref: "#/components/responses/HostsResponse"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+        default:
+          $ref: "#/components/responses/Error"
+      security:
+        - mgmt_auth:
+            - operator
+      
+  /host/activeList:
+    get:
+      tags:
+        - mgmt
+      summary: Get list of currently active registered hosts
+      description: Get list of currently active registered hosts
+      operationId: hostActiveList
+      responses:
+        200:
+          $ref: "#/components/responses/HostsResponse"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+        404:
+          description: "No active hosts in controller"
+          $ref: "#/components/responses/Error"
+        default:
+          $ref: "#/components/responses/Error"
+      security:
+      - mgmt_auth:
+          - operator
+
+  /host/{hostId}:
+    get:
+        tags:
+          - mgmt
+        summary: Get detailed description of selected host
+        description: Get detailed description of selected host
+        operationId: getHostById
+        parameters:
+        - $ref: "#/components/parameters/HostId"
+        responses:
+          200:
+            $ref: "#/components/responses/HostResponse"
+          401:
+            $ref: "#/components/responses/UnauthorizedError"
+          404:
+            description: "No such device"
+            $ref: "#/components/responses/Error"
+          default:
+            $ref: "#/components/responses/Error"
+        security:
+        - mgmt_auth:
+          - operator
+    delete:
+      tags:
+          - mgmt
+      summary: Remove host from set of registerd devices
+      description: Remove host from set of registerd devices
+      operationId: unregisterHostById
+      parameters:
+      - $ref: "#/components/parameters/HostId"
+      responses:
+        200:
+          $ref: "#/components/responses/OkResponse"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+        404:
+          description: "No such device"
+          $ref: "#/components/responses/Error"
+        default:
+          $ref: "#/components/responses/Error"
+      security:
+      - mgmt_auth:
+        - admin
+          
+  /heartbeat:
+    put:
+      tags:
+        - heartbeat
+      summary: Endpoint to report availability by hosts.
+      description: Endpoint to report availability by hosts.
+      operationId: heartbeatReport
+      responses:
+          200:
+            $ref: "#/components/responses/OkResponse"
+          401:
+            $ref: "#/components/responses/UnauthorizedError"
+          default:
+            $ref: "#/components/responses/Error"
+      security:
+        - host_auth:
+          - host
+
+    
+components:
+
+  parameters:
+    TableID:
+      name: tableId
+      in: path
+      description: ID of selected Table
+      required: true
+      schema:
+        $ref: "#/components/schemas/TableID"
+        
+    QueryID:
+      name: queryId
+      in: path
+      description: ID of selected Query
+      required: true
+      schema:
+        $ref: "#/components/schemas/QueryID"
+
+  schemas:
+
+    TableID: 
+      description: ID of selected Table (I propose UUID, but it is under your own discretion)
+      type: string
+
+    QueryID:
+      description: ID of selected Query (I propose UUID, but it is under your own discretion)
+      type: string
+
+    LogicalColumnType:
+      description: Enum describing logical column types
+      type: string
+      enum:
+        - INT64
+        - VARCHAR
+
+    Column:
+      description: Description of single column in table
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/LogicalColumnType"
+
+    TableSchema:
+      description: Description of the table in the database
+      required:
+        - name
+        - columns
+      properties:
+        name:
+          type: string
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/Column"
+
+    ShallowTable:
+      description: Description of a shallow representation of a table (e.g. without detailed column information)
+      required:
+        - name
+      properties:
+        tableId:
+          $ref: "#/components/schemas/TableID"
+        name:
+          type: string
+    
+    Login:
+      description: Stores information required for login into system
+      required:
+        - login
+        - password
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+
+    Token:
+      description: Authorization token
+      required:
+        - token
+        - role
+      properties:
+        token:
+          type: string
+        role:
+          type: string
+          enum:
+            - Admin
+            - Operator
+            - Host
+
+    Host:
+      description: Basic description of generic host.
+      required:
+        - id
+        - mgmtAddress
+        - mgmtPhy
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        mgmtAddress:
+          type: string
+          example: 192.168.88.202/24
+        mgmtPhy:
+          type: string
+          example: 9a:f8:94:1d:a7:bb
+
+    DetailedHost:
+      description: Basic description of generic host.
+      required:
+        - id
+        - mgmtAddress
+        - mgmtPhy
+      type: object
+      properties:
+        BasicHost:
+          $ref: "#/components/schemas/Host"
+        mibProfile:
+          type: string
+          example: example.mib
+
+    RegistrationHost:
+      description: Object to register new host.
+      required:
+        - mgmtAddress
+        - mgmtPhy
+      type: object
+      properties:
+        mgmtAddress:
+          type: string
+          example: 192.168.88.202/24
+        mgmtPhy:
+          type: string
+          example: 9a:f8:94:1d:a7:bb
+        mibProfile:
+          type: string
+          example: example.mib
+
+    Heartbeat:
+      description: Message to report that host is still alive.
+      required:
+        - id
+      type: object
+      properties:
+        id:
+          description: ID of reporting host. sender address should be validated against registered management address.
+          type: integer
+          format: int64
+          example: 10
+
+    MultipleProblemsError:
+      description: Error containing multiple problems about request processing. Useful when processing complex requests where multiple problems can occur at the same time.
+      required:
+        - problems
+      properties:
+        problems:
+          type: array
+          items:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                description: Description of particular problem
+                type: string
+              context:
+                description: Optional context for user (for e.g. which column caused problem). It can be helpful for troubleshooting.
+                type: string
+
+    Error:
+      description: Generic error object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+
+  requestBodies:
+  
+    CreateTableRequest:
+      description: Used to create a new table
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TableSchema"
+
+    LoginRequestBody:
+      description: Used to send login information
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Login"
+
+    Host:
+      description: Host to register
+      content:
+        application/json:
+          schema: 
+            $ref: '#/components/schemas/RegistrationHost'
+  
+  
+  responses:
+    GetTablesResponse:
+      description: Array of tables in database
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/ShallowTable"
+
+    TableCreatedResponse:
+      description: Table created successfully
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TableID"
+
+    GetTableResponse:
+      description: Detailed Table description
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TableSchema"
+
+    HostResponse:
+      description: Detailed Host description
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Host"
+              
+
+    HostsResponse:
+      description: Array of basic hosts informations
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/Host"
+
+    LoginResponse:
+      description: Response containing token and role for authorization after successful login
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Token"
+
+    Error:
+      description: Generic error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    
+
+    MultipleProblemsError:
+      description: Response used when more problems can occur in the system when processing request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MultipleProblemsError"
