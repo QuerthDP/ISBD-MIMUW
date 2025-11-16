@@ -236,6 +236,7 @@ components:
       type: string
       enum:
         - CREATED
+        - PLANNING
         - RUNNING
         - COMPLETED
         - FAILED
@@ -395,8 +396,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/compo
-nents/schemas/TableSchema"
+            $ref: "#/components/schemas/TableSchema"
 
     ExecuteQueryRequest:
       description: Used to submit a new query for execution
