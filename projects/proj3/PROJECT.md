@@ -38,7 +38,7 @@ Najczęściej oznacza to, że metastore także musi zostać zapisany na dysk.
 
 ## Interfejs użytkownika
 
-W [pliku](../../resources/dbmsInterface.yaml) można znaleźć interfejs bazy danych do wykonania w tym projekcie.
+W [pliku](../../interface/dbmsInterface.yaml) można znaleźć interfejs bazy danych do zaimplementowania.
 Jest to minimalny zestaw poleceń w projekcie bazy danych, który umożliwi sprawdzenie projektu.
 
 Operacje podzielone są na dwa typy: `schema` oraz `execution`.
@@ -47,8 +47,8 @@ Poniżej można znaleźć opis operacji znajdujących się w poszczególnych gru
 ### Operacje na tabelach
 
 Głównym endpointem tej grupy jest `/tables`, który zwraca listę wszystkich tabel w systemie.
-**System powinien wyświetlać tabele stworzone przy poprzednim uruchomieniu aplikacji.**.
-Na podstawie odczytanych danych można odczytać szczegóły tabeli odpytując endpoint `/table/{tableId}`.
+**System powinien wyświetlać tabele stworzone przy poprzednim uruchomieniu aplikacji.**
+Na podstawie uzyskanych danych można pobrać szczegóły tabeli poprzez endpoint `/table/{tableId}`.
 Tam można znaleźć strukturę całej tabeli.
 
 Dodatkowo istnieją dwa endpointy służące do tworzenia oraz usuwania tabel z systemu.
@@ -58,10 +58,10 @@ Jeżeli taką tabelę można utworzyć (ma ona unikatową nazwę oraz posiada un
 
 Usuwanie tabeli odbywa się poprzez wysłanie zapytania `DELETE` do endpointu `/table/{tableId}`.
 Jeśli tabela istnieje, powinna zostać usunięta z rejestru tabel.
-Dodatkowo jej pliki będą usunięte w pewnym momencie po wykonaniu akcji.
+Dodatkowo jej pliki będą usunięte w pewnym momencie po wykonaniu zapytania `DELETE`.
 
-**Obydwie operacje powinny mieć obserwowalne efekty uboczne dla zapytań następujących po wykonaniu akcji!.
-Oznacza to, że aktualnie trwające zapytania nie powinny utracić dostępu do plików właśnie usuwanej tabeli.**
+**Efekt uboczny usunięcia tabeli powinien być odczuwalny dla każdego kolejnego zapytania po realizacji usunięcia.
+Oznacza to, że aktualnie trwające zapytania nie powinny utracić dostępu do plików usuwanej tabeli.**
 
 ### Wykonywanie zapytań
 
@@ -83,11 +83,11 @@ Mapowanie jest konieczne w sytuacji wstawiania danych, gdzie tabela posiada mnie
 Umożliwia ono odpowiednie przekierowanie nadwyżki danych do wcześniej przygotowanej tabeli.
 
 **Tak jak w przypadku operacji usuwania tabeli, efekt uboczny wstawiania danych ma być widoczny dopiero po całkowitym zakończeniu wstawiania danych. Niedopuszczalne są odczyty stanu pośredniego tabeli.**
-Najprościej można wykonać taką operację poprzez tworzenie nowego pliku przy każdej operacji COPY i dodanie tych plików do metastore dopiero po zakończeniu całej operacji.
+Najprościej można zrealizować tę gwarancję poprzez tworzenie nowego zestawu plików przy każdej operacji COPY oraz dodanie tych plików do metastore dopiero po zakończeniu całej operacji.
 
 #### Zapytanie SELECT
 
-Operacja `SELECT` przyjmuje nazwę tabeli i ma za zadanie pobrać wszystkie wiersze z tabeli (odpowiednik operacji `SELECT * FROM tableName;` w bazie SQL).
+Operacja `SELECT` przyjmuje nazwę tabeli i ma za zadanie pobrać wszystkie jej wiersze (odpowiednik operacji `SELECT * FROM tableName;` w bazie SQL).
 Jej celem jest obserwacja wstawionych danych poprzez interfejs użytkownika.
 **Kolejność wierszy w zwróconych danych nie jest ustalona.**
 
@@ -96,7 +96,7 @@ Istnieje możliwość ograniczenia zwróconych wierszy poprzez opcjonalny parame
 
 ## Architektura aplikacji
 
-Od tego projektu system bazodanowy zbliża się do minimalnego poziomu złożoności, aby przedstawić ogólny zaraz procesu przetwarzania danych.
+Od tego projektu system bazodanowy zbliża się do minimalnego poziomu złożoności, aby przedstawić ogólny zarys procesu przetwarzania danych.
 Potok wczytywania danych został przygotowany już w poprzednim projekcie.
 Od tego projektu konieczne będzie podstawowe modelowanie życia zapytania.
 
