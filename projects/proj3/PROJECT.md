@@ -39,7 +39,7 @@ Najczęściej oznacza to, że metastore także musi zostać zapisany na dysk.
 ## Interfejs użytkownika
 
 W [pliku](../../resources/dbmsInterface.yaml) można znaleźć interfejs bazy danych do wykonania w tym projekcie.
-Jest to minimalny zestaw poleceń w twoim projecie, który umożliwi sprawdzanie projektów.
+Jest to minimalny zestaw poleceń w projekcie bazy danych, który umożliwi sprawdzenie projektu.
 
 Operacje podzielone są na dwa typy: `schema` oraz `execution`.
 Poniżej można znaleźć opis operacji znajdujących się w poszczególnych grupach.
@@ -47,6 +47,7 @@ Poniżej można znaleźć opis operacji znajdujących się w poszczególnych gru
 ### Operacje na tabelach
 
 Głównym endpointem tej grupy jest `/tables`, który zwraca listę wszystkich tabel w systemie.
+**System powinien wyświetlać tabele stworzone przy poprzednim uruchomieniu aplikacji.**.
 Na podstawie odczytanych danych można odczytać szczegóły tabeli odpytując endpoint `/table/{tableId}`.
 Tam można znaleźć strukturę całej tabeli.
 
@@ -67,7 +68,7 @@ Oznacza to, że aktualnie trwające zapytania nie powinny utracić dostępu do p
 Przez to, że interfejs został zaprojektowany w duchu REST, nie jest on stanowy.
 Jednak nasz system ewidentnie posiada stan, ponieważ zapytania mogą trwać *pewien* czas od ich zlecenia do zakończenia.
 
-Z tego powodu głównym endpointem jest `/queries`, który dostarcza podstawowe informacje o wykonanych zapytaniach do systemu.
+Z tego powodu głównym endpointem jest `/queries`, który dostarcza podstawowe informacje o wykonanych zapytaniach do systemu **od jego uruchomienia**.
 Na podstawie odczytanych danych można odczytać szczegóły zapytań odpytując endpoint `/query/{queryId}`.
 
 System przewiduje dwa rodzaje zapytań: `COPY` oraz `SELECT`.
@@ -95,17 +96,62 @@ Istnieje możliwość ograniczenia zwróconych wierszy poprzez opcjonalny parame
 
 ## Architektura aplikacji
 
+Od tego projektu system bazodanowy zbliża się do minimalnego poziomu złożoności, aby przedstawić ogólny zaraz procesu przetwarzania danych.
+Potok wczytywania danych został przygotowany już w poprzednim projekcie.
+Od tego projektu konieczne będzie podstawowe modelowanie życia zapytania.
 
+![pipeline](res/pipeline.svg)
+
+Typowym podziałem odpowiedzialności w bazach danych jest podział na fazę planowania oraz wykonania.
+Jedna faza od drugiej powinny być od siebie niezależne.
+Takie podejście zwiększa izolacje problemów i ułatwia testowanie aplikacji.
 
 ## Wymagania techniczne
 
-Baza danych powinna nasłuchiwać na sockecie TCP wiadomości z protokołu HTTP.
-Zamknięcie aplikacji nie powinno powodować utarty lub korupcji danych.
+Poza zbudowaniem aplikacji poprzez `makefile` od tego projektu pojawia się wymaganie stworzenia podstawowego kontenera dockerowego.
+Oczekuję, że dostarczony `makefile`, będzie posiadać target `docker` i w efekcie wyprodukuje obraz z bazą danych (można założyć, że użytkownik już posiada zainstalowanego dockera).
+
+Przez to, że baza danych wymaga zależności w czasie działania, proponuję oczekiwać, że użytkownik kontenera poda volumen z zamontowanymi danymi do operacji `COPY` w ścieżce `/data` wewnątrz kontenera.
+
+Wszystkie instrukcje uruchomienia proszę podać w pliku `README.md` projektu.
 
 ## Sugerowane sposoby testowania
 
+Poniższy rozdział jest sugestią, jak można testować stworzony system bazodanowy.
+
 ### Public interface testing (PIT)
+
+Naturalnym sposobem testowania bazy danych jest badanie jej stanu poprzez jej publiczny interfejs.
+Takie testy pozwalają na przetestowanie systemu w sposób end-to-end w jego docelowym środowisku.
+Jeśli interfejs użytkownika jest dobrze określony (tak jak to jest w naszym przypadku), testy takie można zautomatyzować za pomocą skryptów (np. `pytest` albo `bash`).
+
+Ważnym elementów takich testów jest sprawdzenie działania systemu pomiędzy jego uruchomieniami.
 
 ### Testy poszczególnych modułów
 
+Przy modułowej budowie oprogramowania można dzielić kod na niezależne od siebie części oraz testować te części przy ręcznie przygotowanych wejściach z innych modułów.
+Na przykładzie tego projektu można wydzielić 4 elementy z [rysunku architektonicznego](#architektura-aplikacji), które można testować niezależnie od siebie.
+
+Rozważmy testy planisty.
+Typowy scenariusz testowy rozważa:
+* Interfejsy potrzebne do wykonania pracy (tutaj interfejs zapytania od użytkownika, interjes wykonywania zapytań do metastore oraz format planu wykonania).
+* Które interfejsy są używane jako pobieranie danych (tutaj metastore oraz zapytanie użytkownika).
+* Które interfejsy są używane jako dane dla innych modułów (tutaj plan wykonania)
+* Jakich gwarancji możemy spodziewać się od danych wejściowych (np. metastore zawsze zwróci nam ścieżki do istniejących plików).
+
+Gdy znamy już wszystkie elementy, można zaproponować scenariusze testowe badające dane wyjściowe na podstawie danych wejściowych.
+Znając gwarancje badanego modułu, chcemy zbadać czy przy prawidłowych danych wejściowych dane wyjściowe nadal spełniają gwarancje zapewnione przez badany moduł.
+W naszym przykładzie spodziewamy się, że planista wyprodukuje plan, który można wykonać. (Jak to stwierdzić? Jest to równoważne z problemem stopu).
+
+Takie testy są wymagające oraz wymagają dobrego rozumienia systemu.
+Jednak dają one dobrą dokumentację kontraktu modułu wraz z jego gwarancjami.
+Ma to znaczenie przy dużych projektach programistycznych, ponieważ modularyzacja umożliwia pisanie modułów przez różne osoby
+
+Zachęcam do odkrywania modułów w już napisanym kodzie.
+Na pewno zniechęcam do mnożenia ich ponad miarę w fazie projektowania aplikacji.
+W przypadku baz danych podział potoku przetwarzania jest znany od dawna, więc można spróbować się w niego wpisać.
+Jednak ostatecznie podział kodu na części i wynikające z tego interfejsy mają służyć programiście!
+
 ## Materiały do przeczytania
+* [Interfejs użytkownika](../../resources/dbmsInterface.yaml)
+* [Hive](https://en.wikipedia.org/wiki/Apache_Hive) - przykład rozproszonego systemu analitycznego, który posiada odrębny metastore.
