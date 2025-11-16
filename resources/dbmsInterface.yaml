@@ -83,7 +83,7 @@ paths:
 
   /queries:
     get:
-      summary: Get list of queries (optional in project 3, but useful)
+      summary: Get list of queries (optional in project 3, but useful). Use those IDs to get details by calling /query endpoint.
       operationId: getQueries
       tags:
         - execution
@@ -91,13 +91,7 @@ paths:
         - proj4
       responses:
         200:
-          description: Array of queries
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ShallowQuery"
+          $ref: "#/components/responses/GetQueriesResponse"
 
   /query/{queryId}:
     get:
@@ -111,7 +105,7 @@ paths:
       responses:
         200:
           description: Detailed description of selected query
-          $ref: "#/components/schemas/Query"
+          $ref: "#/components/responses/GetQueryResponse"
         404:
           description: Couldn't find a query of given ID
           $ref: "#/components/responses/Error"
@@ -166,6 +160,7 @@ paths:
       responses:
         200:
           $ref: "#/components/responses/SystemInfoResponse"
+
 components:
 
   parameters:
@@ -400,7 +395,8 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/TableSchema"
+            $ref: "#/compo
+nents/schemas/TableSchema"
 
     ExecuteQueryRequest:
       description: Used to submit a new query for execution
@@ -452,6 +448,22 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/QueryID"
+
+    GetQueriesResponse:
+      description: Array of queries submitted to the system
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/ShallowQuery"        
+    
+    GetQueryResponse:
+      description: Detailed Query description
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Query"
 
     QueryResultResponse:
       description: Result of selected query
