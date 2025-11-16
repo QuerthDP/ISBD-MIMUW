@@ -155,3 +155,4 @@ Jednak ostatecznie podział kodu na części i wynikające z tego interfejsy maj
 ## Materiały do przeczytania
 * [Interfejs użytkownika](../../resources/dbmsInterface.yaml)
 * [Hive](https://en.wikipedia.org/wiki/Apache_Hive) - przykład rozproszonego systemu analitycznego, który posiada odrębny metastore.
+* [Opis pliku CSV](https://datatracker.ietf.org/doc/html/rfc4180)
