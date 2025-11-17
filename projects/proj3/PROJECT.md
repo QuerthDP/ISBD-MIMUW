@@ -153,7 +153,9 @@ W przypadku baz danych podział potoku przetwarzania jest znany od dawna, więc 
 Jednak ostatecznie podział kodu na części i wynikające z tego interfejsy mają służyć programiście!
 
 ## Materiały do przeczytania
-* [Interfejs użytkownika](../../resources/dbmsInterface.yaml)
+* [Interfejs użytkownika](../../interface/dbmsInterface.yaml)
 * [Hive](https://en.wikipedia.org/wiki/Apache_Hive) - przykład rozproszonego systemu analitycznego, który posiada odrębny metastore.
 * [Opis pliku CSV](https://datatracker.ietf.org/doc/html/rfc4180)
 * [OpenAPI Generator](https://openapi-generator.tech/)
+* [Swagger](https://swagger.io/) - narzędzie do dokumentacji implementacji interfejsu
+* [Dockerfile](https://docs.docker.com/get-started/docker-concepts/building-images/writing-a-dockerfile/) - wstęp do tworzenia kontenera dockerowego
