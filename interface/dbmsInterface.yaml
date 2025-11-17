@@ -152,6 +152,26 @@ paths:
           description: Result of this query is not available
           $ref: "#/components/responses/Error"
 
+  /error/{queryId}:
+    get:
+      summary: Get error of selected query (will be available only for queries in FAILED state)
+      operationId: getQueryError
+      tags:
+        - proj3
+        - execution
+      parameters:
+        - $ref: "#/components/parameters/QueryID"
+      responses:
+        200:
+          description: Error from running the selected query
+          $ref: "#/components/responses/MultipleProblemsError"
+        404:
+          description: Couldn't find a query of given ID
+          $ref: "#/components/responses/Error"
+        400:
+          description: Error for this query is not available
+          $ref: "#/components/responses/Error"
+
   /system/info:
     get:
       summary: Get basic information about the system (e.g. version, uptime, etc.)
