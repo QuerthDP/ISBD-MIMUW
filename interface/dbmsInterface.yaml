@@ -3,7 +3,7 @@ info:
   title: MIMUW ISBD database system
   description: |-
     This file describes interface between DBMS system and user.
-  version: 1.0.0
+  version: 1.0.1
 tags:
   - name: schema
     description: Endpoints used to access schema structure
@@ -14,7 +14,7 @@ tags:
   - name: proj4
     description: Endpoint to implement in project 4
   - name: metadata
-    description: Endpoints used to access metadata information aboutt the system
+    description: Endpoints used to access metadata information about the system
   - name: extension
     description: Endpoints from extensions (not required)
 
@@ -22,7 +22,7 @@ paths:
 
   /tables:
     get:
-      summary: Get list of tables with their accompaning IDs. Use those IDs to get details by calling /table endpoint.
+      summary: Get list of tables with their accompanying IDs. Use those IDs to get details by calling /table endpoint.
       operationId: getTables
       tags:
         - schema
@@ -49,7 +49,6 @@ paths:
           description: Couldn't find a table of given ID
           $ref: "#/components/responses/Error"
 
-
     delete:
       summary: Delete selected table from database
       operationId: deleteTable
@@ -64,7 +63,7 @@ paths:
         404:
           description: Couldn't find a table of given ID
           $ref: "#/components/responses/Error"
-      
+
   /table:
     put:
       summary: Create new table in database
@@ -81,7 +80,6 @@ paths:
         400:
           description: Cannot create a table due to problems in request (for e.g. table of given name already exists)
           $ref: "#/components/responses/MultipleProblemsError"
-
 
   /queries:
     get:
@@ -128,7 +126,6 @@ paths:
         400:
           description: Cannot create query due to problems in request (or e.g. table in query doesn't exist)
           $ref: "#/components/responses/MultipleProblemsError"
-
 
   /result/{queryId}:
     get:
@@ -193,7 +190,7 @@ components:
       required: true
       schema:
         $ref: "#/components/schemas/TableID"
-        
+
     QueryID:
       name: queryId
       in: path
@@ -204,7 +201,7 @@ components:
 
   schemas:
 
-    TableID: 
+    TableID:
       description: ID of selected Table (I propose UUID, but it is under your own discretion)
       type: string
 
@@ -288,7 +285,7 @@ components:
         isResultAvailable:
           description: Whether result of this query is already available
           type: boolean
-        queryDefiniton:
+        queryDefinition:
           oneOf:
             - $ref: "#/components/schemas/SelectQuery"
             - $ref: "#/components/schemas/CopyQuery"
@@ -304,7 +301,7 @@ components:
             - $ref: "#/components/schemas/CopyQuery"
 
     CopyQuery:
-      description: 
+      description:
         Description of the COPY query from CSV file.
         Server will read the file and insert all data into selected table.
         When number of columns in source and target doesn't match, user have to use "destinationColumns" property to specify which columns data should be inserted into.
@@ -318,7 +315,7 @@ components:
         destinationTableName:
           type: string
         destinationColumns:
-          description: 
+          description:
             List of columns to copy data into.
             It creates a map from source columns to destination columns.
             Assumes that data in source file is in the same order as in this list.
@@ -409,9 +406,13 @@ components:
         author:
           description: Author of the DBMS system (will help me to automate testing)
           type: string
+        uptime:
+          description: System uptime in seconds
+          type: integer
+          format: int64
 
   requestBodies:
-  
+
     CreateTableRequest:
       description: Used to create a new table
       required: true
@@ -442,8 +443,9 @@ components:
               flushResult:
                 description: Say to system that result will not be accessed by the user anymore (it is safe to release the resources connected with the result)
                 type: boolean
-  
+
   responses:
+
     GetTablesResponse:
       description: Array of tables in database
       content:
@@ -481,8 +483,8 @@ components:
           schema:
             type: array
             items:
-              $ref: "#/components/schemas/ShallowQuery"        
-    
+              $ref: "#/components/schemas/ShallowQuery"
+
     GetQueryResponse:
       description: Detailed Query description
       content:
@@ -503,7 +505,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
-    
 
     MultipleProblemsError:
       description: Response used when more problems can occur in the system when processing request
