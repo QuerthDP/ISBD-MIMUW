@@ -1,4 +1,4 @@
-package pit_tests
+package pit
 
 import (
 	"context"
@@ -9,21 +9,21 @@ import (
 	"testing"
 	"time"
 
-	apiclient "github.com/smogork/ISBD-MIMUW/pit/client"
 	tc "github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+
+	apiclient "github.com/smogork/ISBD-MIMUW/pit/client"
 )
 
-type SystemInformation struct {
-	InterfaceVersion string `json:"interfaceVersion"`
-	Version          string `json:"version"`
-	Author           string `json:"author"`
-	Uptime           int64  `json:"uptime"`
-}
+var BaseURL string
 
-var container tc.Container
-var apiClient *apiclient.APIClient
-var baseURL string
+func DbClient(url string) *apiclient.APIClient {
+	// Create and configure API client
+	cfg := apiclient.NewConfiguration()
+	cfg.Servers[0].URL = url
+	cfg.HTTPClient = &http.Client{}
+	return apiclient.NewAPIClient(cfg)
+}
 
 func waitForHTTP(url string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
@@ -45,6 +45,8 @@ func waitForHTTP(url string, timeout time.Duration) error {
 
 func TestMain(m *testing.M) {
 	ctx := context.Background()
+	var container tc.Container
+
 	if os.Getenv("SKIP_DOCKER") == "" {
 		image := os.Getenv("DB_IMAGE")
 		if image == "" {
@@ -76,20 +78,14 @@ func TestMain(m *testing.M) {
 			_ = cont.Terminate(ctx)
 			os.Exit(1)
 		}
-		baseURL = fmt.Sprintf("http://%s:%s", host, mp.Port())
+		BaseURL = fmt.Sprintf("http://%s:%s", host, mp.Port())
 	} else {
-		baseURL = "http://localhost:8080"
+		BaseURL = "http://localhost:8080"
 	}
 
 	// Wait for system info to be available
 	// Do not use client, because of potentially invalid responses
-	waitForHTTP(baseURL+"/system/info", 30*time.Second)
-
-	// Create and configure API client
-	cfg := apiclient.NewConfiguration()
-	cfg.Servers[0].URL = baseURL
-	cfg.HTTPClient = &http.Client{}
-	apiClient = apiclient.NewAPIClient(cfg)
+	waitForHTTP(BaseURL+"/system/info", 30*time.Second)
 
 	code := m.Run()
 
@@ -98,22 +94,4 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(code)
-}
-
-func TestSystemInfo(t *testing.T) {
-	ctx := context.Background()
-	sysInfo, resp, err := apiClient.MetadataAPI.GetSystemInfo(ctx).Execute()
-	if err != nil {
-		t.Fatalf("GetSystemInfo failed: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("unexpected status %d", resp.StatusCode)
-	}
-	if sysInfo == nil {
-		t.Fatalf("system info is nil")
-	}
-	t.Logf("system version: %s", sysInfo.Version)
-	if sysInfo.Version == "" {
-		t.Fatalf("version field empty")
-	}
 }
