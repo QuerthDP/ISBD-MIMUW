@@ -6,26 +6,21 @@ import (
 	"testing"
 
 	"github.com/smogork/ISBD-MIMUW/pit"
+	"github.com/stretchr/testify/assert"
 )
 
 func SystemInfoTest(t *testing.T) {
 	apiClient := pit.DbClient(pit.BaseURL)
+	assert := assert.New(t)
 
 	t.Run("SystemInfo", func(t *testing.T) {
 		ctx := context.Background()
 		sysInfo, resp, err := apiClient.MetadataAPI.GetSystemInfo(ctx).Execute()
-		if err != nil {
-			t.Fatalf("GetSystemInfo failed: %v", err)
-		}
-		if resp.StatusCode != http.StatusOK {
-			t.Fatalf("unexpected status %d", resp.StatusCode)
-		}
-		if sysInfo == nil {
-			t.Fatalf("system info is nil")
-		}
-		t.Logf("system version: %s", sysInfo.Version)
-		if sysInfo.Version == "" {
-			t.Fatalf("version field empty")
-		}
+
+		assert.NoError(err, "GetSystemInfo should not return an error")
+		assert.Equal(http.StatusOK, resp.StatusCode, "GetSystemInfo should return status 200")
+		assert.NotNil(sysInfo, "SystemInformation should not be nil")
+		assert.NotEmpty(sysInfo.Version, "Version field should not be empty")
+		assert.NotEmpty(sysInfo.Author, "Author field should not be empty")
 	})
 }
