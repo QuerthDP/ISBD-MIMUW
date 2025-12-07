@@ -6,16 +6,12 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"testing"
 	"time"
 
+	apiclient "github.com/smogork/ISBD-MIMUW/pit/client"
 	tc "github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-
-	apiclient "github.com/smogork/ISBD-MIMUW/pit/client"
 )
-
-var BaseURL string
 
 func DbClient(url string) *apiclient.APIClient {
 	// Create and configure API client
@@ -43,10 +39,9 @@ func waitForHTTP(url string, timeout time.Duration) error {
 	return fmt.Errorf("timeout waiting for %s", url)
 }
 
-func TestMain(m *testing.M) {
-	ctx := context.Background()
-	var container tc.Container
-
+// StartTestContainer starts the test container (unless SKIP_DOCKER is set), waits for
+// it to become healthy and returns the base URL and a teardown function.
+func StartTestContainer(ctx context.Context) (string, func(), error) {
 	if os.Getenv("SKIP_DOCKER") == "" {
 		image := os.Getenv("DB_IMAGE")
 		if image == "" {
@@ -61,37 +56,34 @@ func TestMain(m *testing.M) {
 
 		cont, err := tc.GenericContainer(ctx, tc.GenericContainerRequest{ContainerRequest: req, Started: true})
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "failed to start container:", err)
-			os.Exit(1)
+			return "", nil, err
 		}
-		container = cont
 
 		host, err := cont.Host(ctx)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "failed to get container host:", err)
 			_ = cont.Terminate(ctx)
-			os.Exit(1)
+			return "", nil, err
 		}
 		mp, err := cont.MappedPort(ctx, "8080/tcp")
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "failed to get mapped port:", err)
 			_ = cont.Terminate(ctx)
-			os.Exit(1)
+			return "", nil, err
 		}
-		BaseURL = fmt.Sprintf("http://%s:%s", host, mp.Port())
-	} else {
-		BaseURL = "http://localhost:8080"
+		base := fmt.Sprintf("http://%s:%s", host, mp.Port())
+
+		// Wait for system info to be available (uses waitForHTTP defined in this package)
+		if err := waitForHTTP(base+"/system/info", 30*time.Second); err != nil {
+			_ = cont.Terminate(ctx)
+			return "", nil, err
+		}
+
+		teardown := func() { _ = cont.Terminate(ctx) }
+		return base, teardown, nil
 	}
 
-	// Wait for system info to be available
-	// Do not use client, because of potentially invalid responses
-	waitForHTTP(BaseURL+"/system/info", 30*time.Second)
-
-	code := m.Run()
-
-	if container != nil {
-		_ = container.Terminate(ctx)
+	base := "http://localhost:8080"
+	if err := waitForHTTP(base+"/system/info", 30*time.Second); err != nil {
+		return "", nil, err
 	}
-
-	os.Exit(code)
+	return base, func() {}, nil
 }

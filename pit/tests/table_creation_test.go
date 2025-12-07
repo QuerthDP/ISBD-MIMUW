@@ -88,8 +88,8 @@ func createTableWithCleanup(t *testing.T, apiClient *apiclient.APIClient, ctx co
 	return tableId
 }
 
-func TableCreationTest(t *testing.T) {
-	dbClient := pit.DbClient(pit.BaseURL)
+func TestTableCreation(t *testing.T) {
+	dbClient := pit.DbClient(BaseURL)
 	ctx := context.Background()
 
 	// Read the people table schema from file
