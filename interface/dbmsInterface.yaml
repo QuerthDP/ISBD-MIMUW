@@ -276,7 +276,7 @@ components:
       required:
         - queryId
         - status
-        - queryString
+        - queryDefinition
       properties:
         queryId:
           $ref: "#/components/schemas/QueryID"
