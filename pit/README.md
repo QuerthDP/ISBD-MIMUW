@@ -22,17 +22,17 @@ Tests can be configured via command-line flags or environment variables. Flags t
 - `--db-image`: Docker image name to use (env: `DB_IMAGE`, default: `isbd-mimuw-db:latest`)
 - `--db-hostname`: Hostname of running database (env: `DB_HOSTNAME`, default: `localhost`)
 - `--db-port`: Port on which database listens (env: `DB_PORT`, default: `8080`)
-- `--skip-docker`: Skip Docker container and use existing database (env: `SKIP_DOCKER`, default: `true`)
+- `--db-run-docker`: Skip Docker container and use existing database (env: `DB_RUN_DOCKER`, default: `true`)
 
 #### Environment Variables
 
 Set these to configure test behavior:
 
 ```bash
-DB_IMAGE=my-custom-db:latest        # Custom Docker image
 DB_HOSTNAME=db.example.com          # Database hostname
 DB_PORT=5432                        # Database port
-SKIP_DOCKER=false                   # Start Docker container instead of connecting to existing
+DB_RUN_DOCKER=true                  # Start Docker container instead of connecting to existing
+DB_IMAGE=my-custom-db:latest        # Custom Docker image (makes sense only with DB_RUN_DOCKER=true)
 ```
 
 ### Usage Examples
@@ -42,7 +42,7 @@ SKIP_DOCKER=false                   # Start Docker container instead of connecti
 go test ./tests -db-hostname 192.168.1.100 -db-port 5432 -v
 
 # Start Docker with a custom image
-go test ./tests -skip-docker false -db-image my-custom-db:v1 -v
+go test ./tests -db-run-docker true -db-image my-custom-db:v1 -v
 
 # Use environment variables
 DB_HOSTNAME=mydb.local DB_PORT=8080 go test ./tests -v
@@ -56,9 +56,9 @@ go test ./tests -run "TableCreation/TableEmpty" -db-hostname mydb.local -db-port
 
 ### Docker Container
 
-To start Docker automatically, set `--skip-docker false` or `SKIP_DOCKER=false`:
+To start Docker automatically, set `--db-run-docker true` or `DB_RUN_DOCKER=true`:
 
 ```bash
 # This will start the Docker container defined by DB_IMAGE
-go test ./tests -skip-docker false -v
+go test ./tests -db-run-docker true -v
 ```
