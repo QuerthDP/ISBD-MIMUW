@@ -56,6 +56,7 @@ func readPeopleSchema() (*apiclient.TableSchema, error) {
 
 func createTable(t *testing.T, apiClient *apiclient.APIClient, ctx context.Context, tableSchema *apiclient.TableSchema) (string, *http.Response, error) {
 	tableId, resp, err := apiClient.SchemaAPI.CreateTable(ctx).TableSchema(*tableSchema).Execute()
+	t.Log(pit.FormatResponse(resp))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 	return tableId, resp, err
@@ -63,6 +64,7 @@ func createTable(t *testing.T, apiClient *apiclient.APIClient, ctx context.Conte
 
 func deleteTable(t *testing.T, apiClient *apiclient.APIClient, ctx context.Context, tableId string) (*http.Response, error) {
 	resp, err := apiClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+	t.Log(pit.FormatResponse(resp))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 	return resp, err
@@ -72,12 +74,16 @@ func createTableWithCleanup(t *testing.T, apiClient *apiclient.APIClient, ctx co
 	// Create table
 	tableId, resp, err := apiClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
 
+	t.Log(pit.FormatResponse(resp))
+
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 	require.NotEmpty(t, tableId)
 
 	t.Cleanup(func() {
 		resp, err := apiClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+
+		t.Log(pit.FormatResponse(resp))
 
 		// Log errof instead of panic
 		if err != nil || resp.StatusCode != http.StatusOK {
@@ -98,6 +104,7 @@ func TestTableCreation(t *testing.T) {
 
 	t.Run("TableEmptyList", func(t *testing.T) {
 		tables, resp, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		require.Len(t, tables, 0)
@@ -109,6 +116,7 @@ func TestTableCreation(t *testing.T) {
 
 		// List tables and verify the table exists
 		tables, resp, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		require.Len(t, tables, 1)
@@ -121,6 +129,7 @@ func TestTableCreation(t *testing.T) {
 
 		// Get table details
 		details, resp, err := dbClient.SchemaAPI.GetTableById(ctx, tableId).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		require.Equal(t, "people", details.Name)
@@ -151,6 +160,7 @@ func TestTableCreation(t *testing.T) {
 
 		// Try to create a table with the same name - should fail
 		_, resp, err := createTable(t, dbClient, ctx, peopleSchema)
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
@@ -164,6 +174,7 @@ func TestTableCreation(t *testing.T) {
 
 		// Try to delete the table again - should fail
 		resp, err := dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
@@ -177,6 +188,7 @@ func TestTableCreation(t *testing.T) {
 
 		// Try to get details of deleted table - should fail
 		_, resp, err := dbClient.SchemaAPI.GetTableById(ctx, tableId).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})

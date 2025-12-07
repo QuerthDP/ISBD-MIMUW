@@ -16,6 +16,9 @@ func TestSystemInfo(t *testing.T) {
 		ctx := context.Background()
 		sysInfo, resp, err := apiClient.MetadataAPI.GetSystemInfo(ctx).Execute()
 
+		// Log the raw HTTP response for debugging / validation
+		t.Log(pit.FormatResponse(resp))
+
 		require.NoError(t, err, "GetSystemInfo should not return an error")
 		require.Equal(t, http.StatusOK, resp.StatusCode, "GetSystemInfo should return status 200")
 		require.NotNil(t, sysInfo, "SystemInformation should not be nil")
