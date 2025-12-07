@@ -395,7 +395,7 @@ components:
       description: Basic information about the system
       required:
         - version
-        - uptime
+        - author
       properties:
         interfaceVersion:
           description: Version of the DBMS interface

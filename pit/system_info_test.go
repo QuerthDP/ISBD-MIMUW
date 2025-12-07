@@ -2,7 +2,6 @@ package pit_tests
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	apiclient "github.com/smogork/ISBD-MIMUW/pit/client"
 	tc "github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -22,6 +22,7 @@ type SystemInformation struct {
 }
 
 var container tc.Container
+var apiClient *apiclient.APIClient
 var baseURL string
 
 func waitForHTTP(url string, timeout time.Duration) error {
@@ -80,6 +81,16 @@ func TestMain(m *testing.M) {
 		baseURL = "http://localhost:8080"
 	}
 
+	// Wait for system info to be available
+	// Do not use client, because of potentially invalid responses
+	waitForHTTP(baseURL+"/system/info", 30*time.Second)
+
+	// Create and configure API client
+	cfg := apiclient.NewConfiguration()
+	cfg.Servers[0].URL = baseURL
+	cfg.HTTPClient = &http.Client{}
+	apiClient = apiclient.NewAPIClient(cfg)
+
 	code := m.Run()
 
 	if container != nil {
@@ -90,21 +101,19 @@ func TestMain(m *testing.M) {
 }
 
 func TestSystemInfo(t *testing.T) {
-	resp, err := http.Get(baseURL + "/system/info")
+	ctx := context.Background()
+	sysInfo, resp, err := apiClient.MetadataAPI.GetSystemInfo(ctx).Execute()
 	if err != nil {
-		t.Fatalf("GET /system/info failed: %v", err)
+		t.Fatalf("GetSystemInfo failed: %v", err)
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		t.Fatalf("unexpected status %d: %s", resp.StatusCode, string(body))
+		t.Fatalf("unexpected status %d", resp.StatusCode)
 	}
-	var si SystemInformation
-	if err := json.NewDecoder(resp.Body).Decode(&si); err != nil {
-		t.Fatalf("decoding response failed: %v", err)
+	if sysInfo == nil {
+		t.Fatalf("system info is nil")
 	}
-	t.Logf("system version: %s", si.Version)
-	if si.Version == "" {
+	t.Logf("system version: %s", sysInfo.Version)
+	if sysInfo.Version == "" {
 		t.Fatalf("version field empty")
 	}
 }
