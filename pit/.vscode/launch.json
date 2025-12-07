@@ -11,7 +11,7 @@
             "mode": "test",
             "program": "${workspaceFolder}/tests",
             "env": {
-                 "SKIP_DOCKER": "TRUE"
+                 "DB_RUN_DOCKER": "TRUE"
                  },
             "args": [],
             "showLog": true
