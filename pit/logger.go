@@ -26,7 +26,7 @@ func FormatResponse(resp *http.Response) string {
 		resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	}
 
-	return fmt.Sprintf("HTTP %d %s\nHeaders: %v\nBody:\n%s\n", resp.StatusCode, resp.Status, resp.Header, string(bodyBytes))
+	return fmt.Sprintf("Received response:\nHTTP %s\nHeaders: %v\nBody:\n%s", resp.Status, resp.Header, string(bodyBytes))
 }
 
 // LogResponse prints the formatted response to stdout. Useful in tests/debugging.

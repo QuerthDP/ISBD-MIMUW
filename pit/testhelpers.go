@@ -53,7 +53,7 @@ func StartTestContainer(ctx context.Context) (string, func(), error) {
 		dbRunDocker = "false" // By default use already running DB
 	}
 
-	if dbRunDocker != "false" {
+	if dbRunDocker == "false" {
 		// Connect to existing database without starting container
 		hostname := os.Getenv("DB_HOSTNAME")
 		if hostname == "" {
