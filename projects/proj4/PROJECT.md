@@ -7,7 +7,7 @@
       - [Funkcje](#funkcje)
       - [Przykłady wyrażeń kolumnowych](#przykłady-wyrażeń-kolumnowych)
     - [Filtrowanie danych - klauzula `WHERE`](#filtrowanie-danych---klauzula-where)
-    - [Sorotwanie danych](#sorotwanie-danych)
+    - [Sortowanie danych](#sortowanie-danych)
     - [Ograniczenie wierszy wynikowych](#ograniczenie-wierszy-wynikowych)
   - [Planowanie i wykonanie zapytania](#planowanie-i-wykonanie-zapytania)
   - [Materiały do przeczytania](#materiały-do-przeczytania)
@@ -19,7 +19,7 @@ System udostępni elastyczny język zapytań, który definiuje potrzebne dane be
 ## Klauzula SELECT
 
 W tym projekcie należy zaimplementować rozszerzoną klauzulę `SELECT`, która od teraz będzie umożliwiać wybór poszczególnych kolumn oraz wykonywanie na nich wiele operacji.
-Od teraz na operację SELECT składają się następujące elementy:
+Od teraz na operację `SELECT` składają się następujące elementy:
 1. Lista *wyrażeń kolumnowych*, które reprezentują wynikowy kształt zapytania.
 2. Wyrażenie filtrujące. Służy do ograniczenia liczby wierszy potrzebnych w wyniku zapytania.
 3. Lista indeksów kolumn wyjściowych (odniesienie do kolumn z punktu pierwszego), po których należy posortować wynik zapytania.
@@ -32,8 +32,8 @@ Składa się ono z podtypów:
 1. Odniesienie do kolumny - jest do para `(nazwa tabeli, nazwa kolumny)`, która jednoznacznie wyznacza kolumnę z danymi. 
 2. Literał - dane znanego typu wpisane przez użytkownika wprost (np. `"Ala ma kota"` albo `1234`).
 3. Funkcja - dobrze zdefiniowana operacja, która przyjmuje pewną ilość argumentów, z których wyznacza wartości dobrze określonego typu (np. `concat("Hello", concat("World", "!"))` - funkcja może jako argument przyjąć dowolne inne wyrażenie kolumnowe).
-4. Operator binarny - przyjmuje dwa wyrażenia kolumnowe i wykonuje na nich pewną fundamentalną operację. Argumenty oraz wynik operacją posiadają typy (np. "col1 + 2" - ma sens tylko, jeśli kolumna `col1` jest typu `INT64`; wtedy wynikiem jest wartość typu `INT64).
-5. Operator unarny - podobnie jak w przypadku operatora binarnego, tylko liczba argumwntów jest równa 1.
+4. Operator binarny - przyjmuje dwa wyrażenia kolumnowe i wykonuje na nich pewną fundamentalną operację. Argumenty oraz wynik operacją posiadają typy (np. "col1 + 2" - ma sens tylko, jeśli kolumna `col1` jest typu `INT64`; wtedy wynikiem jest wartość typu `INT64`).
+5. Operator unarny - podobnie jak w przypadku operatora binarnego, tylko liczba argumentów jest równa 1.
 
 #### Operatory
 
@@ -71,7 +71,7 @@ Odpowiedzialnością planisty jest ocena czy wyrażenie jest wykonywalne.
 Przykłady wyrażeń kolumnowych:
 * `1 + 2 + 3`
 * `"Ala ma kota" / 2` - to wyrażenie kolumnowe nie jest wykonywalne
-* `strlen(concat(col1, col2))` - obliczanie długości z konkatencaji wartości z kolumn `col1` i `col2`. Będzie wykonywalne tylko w przypadku gdy kolumny są typu `VARCHAR`.
+* `strlen(concat(col1, col2))` - obliczanie długości z konkatenacji wartości z kolumn `col1` i `col2`. Będzie wykonywalne tylko w przypadku gdy kolumny są typu `VARCHAR`.
 
 ### Filtrowanie danych - klauzula `WHERE`
 
@@ -87,10 +87,10 @@ Przykłady:
 * `strlen(col1) < 16`
 * `-col1 >= 0`
 
-### Sorotwanie danych
+### Sortowanie danych
 
 Sortowanie danych może odbywać się tylko na danych wynikowych.
-Jest to bardzo przydatny mechanizm do pobierania danych z klauzula `LIMIT`.
+Jest to bardzo przydatny mechanizm do pobierania danych z klauzulą `LIMIT`.
 Bez użycia sortowania użytkownik nie może nic założyć o kolejności zwracanych danych.
 
 Sortowanie w przypadku liczba całkowitych i wartości logicznych odbywa się względem ich wartości.
@@ -104,6 +104,9 @@ Po posortowaniu wartości oczekiwaną wartością jest N najmniejszych lub najwi
 ## Planowanie i wykonanie zapytania
 
 TBD
+* external merge sort
+* kolejnosc przetwarzania danych
+* sprawdzanie poprawnosci zapytania
 
 ## Materiały do przeczytania
 * [Algebra relacji](https://en.wikipedia.org/wiki/Relational_algebra)
