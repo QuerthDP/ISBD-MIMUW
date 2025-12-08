@@ -139,6 +139,7 @@ func (a *SchemaAPIService) CreateTableExecute(r ApiCreateTableRequest) (string, 
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
+	// This removes redundant "" over the id
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 

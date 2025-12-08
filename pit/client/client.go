@@ -136,7 +136,8 @@ func parameterValueToString(obj interface{}, key string) string {
 			return fmt.Sprintf("%v", actualObj.GetActualInstanceValue())
 		}
 
-		return fmt.Sprintf("%v", obj)
+		s := fmt.Sprintf("%v", obj)
+		return s[1 : len(s)-1]
 	}
 	var param, ok = obj.(MappedNullable)
 	if !ok {
@@ -146,7 +147,8 @@ func parameterValueToString(obj interface{}, key string) string {
 	if err != nil {
 		return ""
 	}
-	return fmt.Sprintf("%v", dataMap[key])
+	s := fmt.Sprintf("%v", dataMap[key])
+	return s[1 : len(s)-1]
 }
 
 // parameterAddToHeaderOrQuery adds the provided object to the request header or url query
