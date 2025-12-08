@@ -48,7 +48,7 @@ git rev-list -n 1 --first-parent --before="data-oddania-2025 23:59" master
 | -------------- | ------------------------------ | --------- | -------------------------------- | --------------------------------- |
 | 1              | Badanie sposobów odczytu pliku | 20        | 20.10.2025r. (3)                 | [opis](projects/proj1/PROJECT.md) |
 | 2              | Przygotowanie formatu pliku    | 20        | 13.11.2025r. (6)                 | [opis](projects/proj2/PROJECT.md) |
-| 3              | Wczytywanie danych z pliku CSV | 30        | 08.12.2025r. (10)                 | [opis](projects/proj3/PROJECT.md) |
+| 3              | Wczytywanie danych z pliku CSV | 30        | 10.12.2025r. (10)                 | [opis](projects/proj3/PROJECT.md) |
 | 4              | Tworzenie zapytań o dane       | 30        | 19.01.2026r. (15)                | [opis](projects/proj4/PROJECT.md) |
 
 ## Wymagania techniczne
