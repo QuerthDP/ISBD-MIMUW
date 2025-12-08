@@ -54,11 +54,13 @@ func readPeopleSchema() (*apiclient.TableSchema, error) {
 	return apiclient.NewTableSchema("people", columns), nil
 }
 
-func createTable(t *testing.T, apiClient *apiclient.APIClient, ctx context.Context, tableSchema *apiclient.TableSchema) (string, *http.Response, error) {
+func createTable(t *testing.T, apiClient *apiclient.APIClient, ctx context.Context, tableSchema *apiclient.TableSchema, mayFail bool) (string, *http.Response, error) {
 	tableId, resp, err := apiClient.SchemaAPI.CreateTable(ctx).TableSchema(*tableSchema).Execute()
 	t.Log(pit.FormatResponse(resp))
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	if !mayFail {
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	}
 	return tableId, resp, err
 }
 
@@ -151,45 +153,42 @@ func TestTableCreation(t *testing.T) {
 		peopleSchema2.Name = "people2"
 
 		// Create another table with the same schema but different name - should succeed
-		_ = createTableWithCleanup(t, dbClient, ctx, peopleSchema)
+		_ = createTableWithCleanup(t, dbClient, ctx, peopleSchema2)
 	})
 
-	t.Run("TableDoubleNaemCreation", func(t *testing.T) {
+	t.Run("TableDoubleNameCreation", func(t *testing.T) {
 		// Create the people table
 		_ = createTableWithCleanup(t, dbClient, ctx, peopleSchema)
 
 		// Try to create a table with the same name - should fail
-		_, resp, err := createTable(t, dbClient, ctx, peopleSchema)
+		_, resp, _ := createTable(t, dbClient, ctx, peopleSchema, true)
 		t.Log(pit.FormatResponse(resp))
-		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
 	t.Run("TableDoubleRemove", func(t *testing.T) {
 		// Create the people table
-		tableId, _, _ := createTable(t, dbClient, ctx, peopleSchema)
+		tableId, _, _ := createTable(t, dbClient, ctx, peopleSchema, false)
 
 		// Delete the table - should succeed
 		_, _ = deleteTable(t, dbClient, ctx, tableId)
 
 		// Try to delete the table again - should fail
-		resp, err := dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+		resp, _ := dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
 		t.Log(pit.FormatResponse(resp))
-		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
 	t.Run("TableNoDetailsAfterRemoval", func(t *testing.T) {
 		// Create the people table
-		tableId, _, _ := createTable(t, dbClient, ctx, peopleSchema)
+		tableId, _, _ := createTable(t, dbClient, ctx, peopleSchema, false)
 
 		// Delete the table - should succeed
 		_, _ = deleteTable(t, dbClient, ctx, tableId)
 
 		// Try to get details of deleted table - should fail
-		_, resp, err := dbClient.SchemaAPI.GetTableById(ctx, tableId).Execute()
+		_, resp, _ := dbClient.SchemaAPI.GetTableById(ctx, tableId).Execute()
 		t.Log(pit.FormatResponse(resp))
-		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
