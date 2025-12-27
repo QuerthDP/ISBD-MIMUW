@@ -450,6 +450,12 @@ components:
       type: array
       items:
         type: string
+    
+    BooleanColumn:
+      description: Column containing BOOLEAN values
+      type: array
+      items:
+        type: boolean
 
     QueryResult:
       description: Result of a query execution (plain json data)
@@ -468,6 +474,7 @@ components:
               oneOf:
                 - $ref: "#/components/schemas/Int64Column"
                 - $ref: "#/components/schemas/VarcharColumn"
+                - $ref: "#/components/schemas/BooleanColumn"
 
     MultipleProblemsError:
       description: Error containing multiple problems about request processing. Useful when processing complex requests where multiple problems can occur at the same time.
