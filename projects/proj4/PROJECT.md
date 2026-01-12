@@ -40,19 +40,19 @@ Od teraz na operację `SELECT` składają się następujące elementy:
 
 Wyrażenie kolumnowe jest najogólniejszym sposobem opisania wyniku zapytania przez użytkownika.
 Składa się ono z podtypów:
-1. Odniesienie do kolumny - jest do para `(nazwa tabeli, nazwa kolumny)`, która jednoznacznie wyznacza kolumnę z danymi. 
+1. Odniesienie do kolumny - jest to para `(nazwa tabeli, nazwa kolumny)`, która jednoznacznie wyznacza kolumnę z danymi. 
 2. Literał - dane znanego typu wpisane przez użytkownika wprost (np. `"Ala ma kota"` albo `1234`).
 3. Funkcja - dobrze zdefiniowana operacja, która przyjmuje pewną ilość argumentów, z których wyznacza wartości dobrze określonego typu (np. `concat("Hello", concat("World", "!"))` - funkcja może jako argument przyjąć dowolne inne wyrażenie kolumnowe).
-4. Operator binarny - przyjmuje dwa wyrażenia kolumnowe i wykonuje na nich pewną fundamentalną operację. Argumenty oraz wynik operacją posiadają typy (np. "col1 + 2" - ma sens tylko, jeśli kolumna `col1` jest typu `INT64`; wtedy wynikiem jest wartość typu `INT64`).
+4. Operator binarny - przyjmuje dwa wyrażenia kolumnowe i wykonuje na nich pewną fundamentalną operację. Argumenty oraz wynik operacji posiadają typy (np. "col1 + 2" - ma sens tylko, jeśli kolumna `col1` jest typu `INT64`; wtedy wynikiem jest wartość typu `INT64`).
 5. Operator unarny - podobnie jak w przypadku operatora binarnego, tylko liczba argumentów jest równa 1.
 
 #### Operatory
 
 Do zaimplementowania są następujące operatory:
-1. Dodawanie - przyjmuje dwie liczby całkowity i zwraca liczbę całkowitą
-2. Odejmowanie - przyjmuje dwie liczby całkowity i zwraca liczbę całkowitą
-3. Mnożenie - przyjmuje dwie liczby całkowity i zwraca liczbę całkowitą
-4. Dzielenie - przyjmuje dwie liczby całkowity i zwraca liczbę całkowitą
+1. Dodawanie - przyjmuje dwie liczby całkowite i zwraca liczbę całkowitą
+2. Odejmowanie - przyjmuje dwie liczby całkowite i zwraca liczbę całkowitą
+3. Mnożenie - przyjmuje dwie liczby całkowite i zwraca liczbę całkowitą
+4. Dzielenie - przyjmuje dwie liczby całkowite i zwraca liczbę całkowitą
 5. Logiczna koniunkcja (AND) - przyjmuje dwie wartości logiczne i zwraca wartość logiczną
 6. Logiczna alternatywa (OR) - przyjmuje dwie wartości logiczne i zwraca wartość logiczną
 7. Operator równości - przyjmuje dwie wartości dowolnego typu (dwie muszą być tego samego typu) i zwraca wartość logiczną. W przypadku liczb całkowitych i wartości logicznych porównuje ich wartości, a w przypadku napisów porównania następuje znak po znaku.
@@ -61,7 +61,7 @@ Do zaimplementowania są następujące operatory:
 10. Operator większości - przyjmuje dwie wartości dowolnego typu (dwie muszą być tego samego typu) i zwraca wartość logiczną. W przypadku liczb całkowitych i wartości logicznych porównuje ich wartości, a w przypadku napisów porównania następuje w porządku leksykograficznym.
 11. Operator mniejsze lub równe - przyjmuje dwie wartości dowolnego typu (dwie muszą być tego samego typu) i zwraca wartość logiczną. W przypadku liczb całkowitych i wartości logicznych porównuje ich wartości, a w przypadku napisów porównania następuje w porządku leksykograficznym.
 12. Operator większe lub równe - przyjmuje dwie wartości dowolnego typu (dwie muszą być tego samego typu) i zwraca wartość logiczną. W przypadku liczb całkowitych i wartości logicznych porównuje ich wartości, a w przypadku napisów porównania następuje w porządku leksykograficznym.
-13. Operator negacji logicznej - przyjmuje jedną wartość logiczną i zwraca wartość logiczna o odwrotnej wartości niż wejście.
+13. Operator negacji logicznej - przyjmuje jedną wartość logiczną i zwraca wartość logiczną o odwrotnej wartości niż wejście.
 14. Operator negacji - przyjmuje liczbę całkowitą i wyznacza jej wartość ujemną.
 
 #### Funkcje
@@ -104,7 +104,7 @@ Sortowanie danych może odbywać się tylko na danych wynikowych.
 Jest to bardzo przydatny mechanizm do pobierania danych z klauzulą `LIMIT`.
 Bez użycia sortowania użytkownik nie może nic założyć o kolejności zwracanych danych.
 
-Sortowanie w przypadku liczba całkowitych i wartości logicznych odbywa się względem ich wartości.
+Sortowanie w przypadku liczb całkowitych i wartości logicznych odbywa się względem ich wartości.
 Dla wartości typu `VARCHAR` należy użyć porządku leksykograficznego.
 
 ### Ograniczenie wierszy wynikowych
@@ -116,7 +116,7 @@ Po posortowaniu wartości oczekiwaną wartością jest N najmniejszych lub najwi
 
 Planowanie zapytania polega na przygotowaniu planu wykonania na podstawie zapytania użytkownika.
 Plan wykonania jest ciągiem operacji, które należy wykonać, aby uzyskać wynik zapytania.
-Każda operacja w ma zdefiniowany kształ wejścia oraz kolumny na których ma działać.
+Każda operacja ma zdefiniowany kształt wejścia oraz kolumny na których ma działać.
 Wynik pojedynczej operacji najczęściej będzie zapisany w pewnej kolumnie (istniejącej lub dodanej w trakcie działania operacji).
 
 ### Potok przetwarzania danych (Pipeline)
@@ -159,7 +159,7 @@ W przypadku zbyt dużej liczby *runów* do jednoczesnego scalenia, należy wykon
 ### Common Subexpression Elimination (CSE)
 
 Optymalizacja **CSE** (eliminacja wspólnych podwyrażeń) polega na wykrywaniu powtarzających się wyrażeń kolumnowych i obliczaniu ich tylko raz.
-W przyapdku naszego laboratorium chcemy wyznaczy wspólne obliczenie pomiędzy transformacjami przed filtrowaniem oraz po filtrowaniu.
+W przypadku naszego laboratorium chcemy wyznaczyć wspólne obliczenie pomiędzy transformacjami przed filtrowaniem oraz po filtrowaniu.
 
 Przykład:
 ```sql
@@ -167,12 +167,12 @@ SELECT strlen(concat(col1, col2)), strlen(concat(col1, col2)) + 10
 WHERE strlen(concat(col1, col2)) > 5
 ```
 
-Wyrażenie `strlen(concat(col1, col2))` występuje trzykrotnie. Po zastosowaniu CSE oblczenie `strlen(concat(col1, col2))` zapisujemy w kolumnie tymczasowej (wyznaczonej w fazie projekcji wejściowej) i uzywamy w projekcji wyjściowej.
+Wyrażenie `strlen(concat(col1, col2))` występuje trzykrotnie. Po zastosowaniu CSE obliczenie `strlen(concat(col1, col2))` zapisujemy w kolumnie tymczasowej (wyznaczonej w fazie projekcji wejściowej) i używamy w projekcji wyjściowej.
 
-Jako element projektu, chciałbym aby ta funkcja została zaimpelemtnowana poprzez wyznaczenie funkcji skrótu wszystkich poddrzew operacji uzyskanych z wejścia uzytkownika.
-Hash operacji powinien składać sie z unikalnego hasha wynikajacego z typu operacji oraz hasha jego dzieci.
-Dla operacji przemiennych (np. dodawanie) nalezy uzyc kolejnosci hashowanie dla dzieci od najmniejszej do największej.
-Poddrzewa o wspolnych hashach nalezy wyznaczyc przed filtrowaniem.
+Jako element projektu, chciałbym aby ta funkcja została zaimplementowana poprzez wyznaczenie funkcji skrótu wszystkich poddrzew operacji uzyskanych z wejścia użytkownika.
+Hash operacji powinien składać się z unikalnego hasha wynikającego z typu operacji oraz hasha jego dzieci.
+Dla operacji przemiennych (np. dodawanie) należy użyć kolejności hashowania dla dzieci od najmniejszej do największej.
+Poddrzewa o wspólnych hashach należy wyznaczyć przed filtrowaniem.
 
 ### Zrównoleglenie potoku przetwarzania
 
@@ -215,11 +215,11 @@ W przypadku błędu walidacji należy zwrócić błąd planowania.
 
 Projekt jest oceniany w skali **30 punktów**, podzielonych na następujące części:
 
-| Komponent | Punkty | Opis |
-|-----------|--------|------|
-| **External Merge Sort** | 10 pkt | Implementacja algorytmu sortowania zewnętrznego dla danych przekraczających rozmiar pamięci |
-| **Common Subexpression Elimination** | 10 pkt | Optymalizacja eliminacji wspólnych podwyrażeń w planie zapytania |
-| **Planowanie i wykonanie zapytań** | 10 pkt | Przygotowanie planu wykonania, walidacja zapytania oraz implementacja potoku przetwarzania |
+| Komponent | Punkty | Testy | Opis |
+|-----------|--------|-------|------|
+| **External Merge Sort** | 10 pkt | `TestStress_Sort*` | Implementacja algorytmu sortowania zewnętrznego dla danych przekraczających rozmiar pamięci |
+| **Common Subexpression Elimination** | 10 pkt | `TestStress_CSE*` | Optymalizacja eliminacji wspólnych podwyrażeń pomiedzy dwoma projekcjami |
+| **Planowanie i wykonanie zapytań** | 10 pkt | `TestQueryValidation_*`, `TestFunctional_*` | Przygotowanie planu wykonania, walidacja zapytania oraz implementacja potoku przetwarzania |
 
 ### Ocena projektu
 
@@ -250,5 +250,4 @@ Testy PIT sprawdzają:
 
 ## Materiały do przeczytania
 * [Algebra relacji](https://en.wikipedia.org/wiki/Relational_algebra)
-* [K-way merge sort]()
-* 
+* [K-way merge sort](https://en.wikipedia.org/wiki/K-way_merge_algorithm)
