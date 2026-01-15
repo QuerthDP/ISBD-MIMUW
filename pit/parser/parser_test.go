@@ -122,7 +122,7 @@ func TestParseOrderByAndLimit(t *testing.T) {
 }
 
 func TestParseFunctions(t *testing.T) {
-	input := "SELECT UPPER(name), STRLEN(description), CONCAT(a, b)"
+	input := "SELECT UPPER(name), STRLEN(description), CONCAT(a, b) FROM t1"
 	query, err := ParseSQL(input)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -162,7 +162,7 @@ func TestParseFunctions(t *testing.T) {
 }
 
 func TestParseLiterals(t *testing.T) {
-	input := "SELECT 42, 'hello', TRUE, FALSE"
+	input := "SELECT 42, 'hello', TRUE, FALSE FROM t1"
 	query, err := ParseSQL(input)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -229,7 +229,7 @@ func TestParseTableQualifiedColumn(t *testing.T) {
 }
 
 func TestParseUnaryOperators(t *testing.T) {
-	input := "SELECT -a, NOT b"
+	input := "SELECT -a, NOT b FROM t1"
 	query, err := ParseSQL(input)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -257,7 +257,7 @@ func TestParseUnaryOperators(t *testing.T) {
 
 func TestParseComplexExpression(t *testing.T) {
 	// (a + b) * c - d / e
-	input := "SELECT (a + b) * c - d / e"
+	input := "SELECT (a + b) * c - d / e FROM t1"
 	query, err := ParseSQL(input)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -357,4 +357,11 @@ func TestTableGuessingInFunction(t *testing.T) {
 
 	require.Equal(t, "t1", *query.ColumnClauses[0].Function.Arguments[0].ColumnReferenceExpression.TableName)
 	require.Equal(t, "c1", *query.ColumnClauses[0].Function.Arguments[0].ColumnReferenceExpression.ColumnName)
+}
+
+func TestMissingFrom(t *testing.T) {
+	input := "SELECT c1"
+	query, err := ParseSQL(input)
+	require.Nil(t, query)
+	require.ErrorContains(t, err, "FROM clause is required")
 }
