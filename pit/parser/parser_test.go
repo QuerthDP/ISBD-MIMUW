@@ -311,6 +311,13 @@ func TestMultipleFromClauses(t *testing.T) {
 	require.Equal(t, "c2", *query.ColumnClauses[1].ColumnReferenceExpression.ColumnName)
 }
 
+func TestMultipleFromClausesDisambigous(t *testing.T) {
+	input := "SELECT t1.c1, c2 FROM t1, t2"
+	query, err := ParseSQL(input)
+	require.Nil(t, query)
+	require.ErrorContains(t, err, "cannot guess table name for column c2 with multiple FROM tables")
+}
+
 func TestTableGuessing(t *testing.T) {
 	input := "SELECT c1, c2 FROM t1"
 	query, err := ParseSQL(input)
