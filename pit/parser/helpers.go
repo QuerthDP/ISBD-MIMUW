@@ -68,7 +68,14 @@ func buildQuery(columns, from, where, orderBy, limit interface{}) (*openapi.Sele
 	query := openapi.NewSelectQuery(guessedColRefences)
 
 	if where != nil {
+
 		expr := where.(*openapi.ColumnExpression)
+
+		err := diveIntoColumnExpression(expr, from.([]string))
+		if err != nil {
+			return nil, err
+		}
+
 		query.WhereClause = expr
 	}
 

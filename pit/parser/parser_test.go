@@ -372,3 +372,14 @@ func TestMissingFrom(t *testing.T) {
 	require.Nil(t, query)
 	require.ErrorContains(t, err, "FROM clause is required")
 }
+
+func TestWhereClause(t *testing.T) {
+	input := "SELECT c1 FROM t1 WHERE c1 = 10"
+	query, err := ParseSQL(input)
+	require.NoError(t, err)
+
+	require.Equal(t, "c1", *query.WhereClause.ColumnarBinaryOperation.LeftOperand.ColumnReferenceExpression.ColumnName)
+	require.Equal(t, "t1", *query.WhereClause.ColumnarBinaryOperation.LeftOperand.ColumnReferenceExpression.TableName)
+	require.Equal(t, int64(10), *query.WhereClause.ColumnarBinaryOperation.RightOperand.Literal.Value.Int64)
+	require.Equal(t, "EQUAL", *query.WhereClause.ColumnarBinaryOperation.Operator)
+}
