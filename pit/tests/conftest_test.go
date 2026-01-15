@@ -203,7 +203,7 @@ func SubmitSelectQuery(apiClient *apiclient.APIClient, ctx context.Context, sql 
 }
 
 // WaitForQueryCompletion waits for a query to reach COMPLETED or FAILED status
-// func WaitForQueryCompletion(apiClient *apiclient.APIClient, ctx context.Context, queryId string, timeout time.Duration) (*apiclient.Query, error) {
+func WaitForQueryCompletion(apiClient *apiclient.APIClient, ctx context.Context, queryId string, timeout time.Duration) (*apiclient.Query, error) {
 	deadline := time.Now().Add(timeout)
 
 	for time.Now().Before(deadline) {
