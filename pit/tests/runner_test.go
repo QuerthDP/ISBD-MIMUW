@@ -154,7 +154,7 @@ func (r *ValidationTestRunner) assertSuccess(t *testing.T, submitted SubmittedVa
 	}
 	require.Equal(t, http.StatusOK, submitted.SubmitResp.StatusCode)
 
-	query, err := WaitForQueryCompletionWithFlush(r.apiClient, r.ctx, submitted.QueryID, 10*time.Second)
+	query, err := WaitForQueryCompletionWithFlush(r.apiClient, r.ctx, submitted.QueryID, 10*time.Second) // Flushing, because it can succeed and generate results
 	require.NoError(t, err, "Query should complete within timeout")
 	require.Equal(t, apiclient.COMPLETED, query.GetStatus(), "Query should complete successfully")
 }
@@ -170,7 +170,7 @@ func (r *ValidationTestRunner) assertFailure(t *testing.T, submitted SubmittedVa
 		t.Fatalf("Unexpected submission error: %v", submitted.SubmitErr)
 	}
 
-	query, err := WaitForQueryCompletion(r.apiClient, r.ctx, submitted.QueryID, 10*time.Second)
+	query, err := WaitForQueryCompletionWithFlush(r.apiClient, r.ctx, submitted.QueryID, 10*time.Second) // Flushing, because it can succeed and generate results
 	require.NoError(t, err, "Query should complete within timeout")
 	require.Equal(t, apiclient.FAILED, query.GetStatus(), "Query should fail validation")
 
