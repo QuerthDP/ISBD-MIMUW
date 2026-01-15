@@ -10,17 +10,19 @@
     - [Sortowanie danych](#sortowanie-danych)
     - [Ograniczenie wierszy wynikowych](#ograniczenie-wierszy-wynikowych)
   - [Planowanie i wykonanie zapytania](#planowanie-i-wykonanie-zapytania)
-    - [Ograniczenia zapytań SELECT](#ograniczenia-zapytań-select)
     - [Potok przetwarzania danych (Pipeline)](#potok-przetwarzania-danych-pipeline)
     - [External Merge Sort](#external-merge-sort)
     - [Common Subexpression Elimination (CSE)](#common-subexpression-elimination-cse)
     - [Zrównoleglenie potoku przetwarzania](#zrównoleglenie-potoku-przetwarzania)
+      - [Zasada działania](#zasada-działania)
     - [Sprawdzanie poprawności zapytania](#sprawdzanie-poprawności-zapytania)
   - [Wymagania projektowe](#wymagania-projektowe)
     - [Podział punktów](#podział-punktów)
     - [Ocena projektu](#ocena-projektu)
-    - [Wymagania techniczne](#wymagania-techniczne)
     - [Sugerowane sposoby testowania](#sugerowane-sposoby-testowania)
+      - [Testy External Merge Sort](#testy-external-merge-sort)
+      - [Testy CSE](#testy-cse)
+      - [Testy integracyjne](#testy-integracyjne)
   - [Materiały do przeczytania](#materiały-do-przeczytania)
 
 
@@ -127,7 +129,7 @@ Wykonanie zapytania `SELECT` można przedstawić jako potok przetwarzania danych
 Reader → Transformation → Filter → Transformation → Sort → Limit → Output
 ```
 
-![pipeline](res/pipeline.svg)
+![pipeline](res/single-pipeline.svg)
 
 Opis poszczególnych etapów:
 
@@ -178,7 +180,7 @@ Poddrzewa o wspólnych hashach należy wyznaczyć przed filtrowaniem.
 
 Potok przetwarzania można zrównoleglić poprzez powielenie początkowej części pipeline'u na N równoległych workerów.
 
-![pipeline](res/parallel_pipeline.svg)
+![pipeline](res/parallel-pipeline.svg)
 
 #### Zasada działania
 
