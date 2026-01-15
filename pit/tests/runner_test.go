@@ -154,7 +154,7 @@ func (r *ValidationTestRunner) assertSuccess(t *testing.T, submitted SubmittedVa
 	}
 	require.Equal(t, http.StatusOK, submitted.SubmitResp.StatusCode)
 
-	query, err := WaitForQueryCompletion(r.apiClient, r.ctx, submitted.QueryID, 10*time.Second)
+	query, err := WaitForQueryCompletionWithFlush(r.apiClient, r.ctx, submitted.QueryID, 10*time.Second)
 	require.NoError(t, err, "Query should complete within timeout")
 	require.Equal(t, apiclient.COMPLETED, query.GetStatus(), "Query should complete successfully")
 }
