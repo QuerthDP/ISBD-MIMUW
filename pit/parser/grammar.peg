@@ -32,7 +32,7 @@ import (
 
 Query <- _ "SELECT"i _ columns:ColumnList from:FromClause? where:WhereClause? 
          orderBy:OrderByClause? limit:LimitClause? _ ';'? _ EOF {
-    return buildQuery(columns, from, where, orderBy, limit), nil
+    return buildQuery(columns, from, where, orderBy, limit)
 }
 
 // ============================================================================
@@ -43,9 +43,8 @@ ColumnList <- first:Expr rest:( _ ',' _ e:Expr { return e, nil } )* {
     return buildColumnList(first, rest), nil
 }
 
-FromClause <- _ "FROM"i _ name:Identifier {
-    s := name.(string)
-    return &s, nil
+FromClause <- _ "FROM"i _ first:Identifier rest:( _ ',' _ name:Identifier { return name, nil } )* {
+    return buildFromClause(first, rest), nil
 }
 
 WhereClause <- _ "WHERE"i _ expr:Expr {

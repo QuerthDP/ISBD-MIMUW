@@ -3,6 +3,8 @@ package parser
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseSimpleSelect(t *testing.T) {
@@ -294,4 +296,65 @@ func TestJSONOutput(t *testing.T) {
 	if _, ok := result["columnClauses"]; !ok {
 		t.Error("expected 'columnClauses' in JSON output")
 	}
+}
+
+func TestMultipleFromClauses(t *testing.T) {
+	input := "SELECT t1.c1, t2.c2 FROM t1, t2"
+	query, err := ParseSQL(input)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	require.Equal(t, "t1", *query.ColumnClauses[0].ColumnReferenceExpression.TableName)
+	require.Equal(t, "t2", *query.ColumnClauses[1].ColumnReferenceExpression.TableName)
+	require.Equal(t, "c1", *query.ColumnClauses[0].ColumnReferenceExpression.ColumnName)
+	require.Equal(t, "c2", *query.ColumnClauses[1].ColumnReferenceExpression.ColumnName)
+}
+
+func TestTableGuessing(t *testing.T) {
+	input := "SELECT c1, c2 FROM t1"
+	query, err := ParseSQL(input)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	require.Equal(t, "t1", *query.ColumnClauses[0].ColumnReferenceExpression.TableName)
+	require.Equal(t, "t1", *query.ColumnClauses[1].ColumnReferenceExpression.TableName)
+	require.Equal(t, "c1", *query.ColumnClauses[0].ColumnReferenceExpression.ColumnName)
+	require.Equal(t, "c2", *query.ColumnClauses[1].ColumnReferenceExpression.ColumnName)
+}
+
+func TestTableGuessingInOperands(t *testing.T) {
+	input := "SELECT c1+c2 FROM t1"
+	query, err := ParseSQL(input)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	require.Equal(t, "t1", *query.ColumnClauses[0].ColumnarBinaryOperation.LeftOperand.ColumnReferenceExpression.TableName)
+	require.Equal(t, "t1", *query.ColumnClauses[0].ColumnarBinaryOperation.RightOperand.ColumnReferenceExpression.TableName)
+	require.Equal(t, "c1", *query.ColumnClauses[0].ColumnarBinaryOperation.LeftOperand.ColumnReferenceExpression.ColumnName)
+	require.Equal(t, "c2", *query.ColumnClauses[0].ColumnarBinaryOperation.RightOperand.ColumnReferenceExpression.ColumnName)
+}
+
+func TestTableGuessingInUnaryOperand(t *testing.T) {
+	input := "SELECT -c1 FROM t1"
+	query, err := ParseSQL(input)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	require.Equal(t, "t1", *query.ColumnClauses[0].ColumnarUnaryOperation.Operand.ColumnReferenceExpression.TableName)
+	require.Equal(t, "c1", *query.ColumnClauses[0].ColumnarUnaryOperation.Operand.ColumnReferenceExpression.ColumnName)
+}
+
+func TestTableGuessingInFunction(t *testing.T) {
+	input := "SELECT STRLEN(c1) FROM t1"
+	query, err := ParseSQL(input)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	require.Equal(t, "t1", *query.ColumnClauses[0].Function.Arguments[0].ColumnReferenceExpression.TableName)
+	require.Equal(t, "c1", *query.ColumnClauses[0].Function.Arguments[0].ColumnReferenceExpression.ColumnName)
 }
