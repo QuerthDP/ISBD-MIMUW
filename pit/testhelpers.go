@@ -10,6 +10,7 @@ import (
 	"time"
 
 	apiclient "github.com/smogork/ISBD-MIMUW/pit/client"
+	"github.com/docker/go-connections/nat"
 	tc "github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -78,18 +79,24 @@ func StartTestContainer(ctx context.Context) (string, func(), error) {
 		image = "isbd-mimuw-db:latest"
 	}
 
-	// Get absolute path to tables directory for bind mount
+	port := os.Getenv("DB_PORT")
+	if port == "" {
+		port = "8080"
+	}
+    
+  // Get absolute path to tables directory for bind mount
 	// The tables directory is at pit/tables, relative to where go test runs (pit/tests)
 	tablesDir, err := filepath.Abs(filepath.Join("..", "tables"))
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to get tables directory path: %w", err)
 	}
 
+	portSpec := port + "/tcp"
 	req := tc.ContainerRequest{
 		Image:        image,
-		ExposedPorts: []string{"8080/tcp"},
-		WaitingFor:   wait.ForHTTP("/system/info").WithPort("8080/tcp").WithStartupTimeout(30 * time.Second),
-		Mounts: tc.Mounts(
+		ExposedPorts: []string{portSpec},
+		WaitingFor:   wait.ForHTTP("/system/info").WithPort(nat.Port(portSpec)).WithStartupTimeout(30 * time.Second),
+    Mounts: tc.Mounts(
 			tc.BindMount(tablesDir, "/data/tables"),
 		),
 	}
@@ -104,7 +111,7 @@ func StartTestContainer(ctx context.Context) (string, func(), error) {
 		_ = cont.Terminate(ctx)
 		return "", nil, err
 	}
-	mp, err := cont.MappedPort(ctx, "8080/tcp")
+	mp, err := cont.MappedPort(ctx, nat.Port(portSpec))
 	if err != nil {
 		_ = cont.Terminate(ctx)
 		return "", nil, err
