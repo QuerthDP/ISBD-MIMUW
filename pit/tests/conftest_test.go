@@ -56,31 +56,51 @@ var (
 
 // TestResult holds information about a test execution
 type TestResult struct {
-	Name   string
-	Passed bool
+	Name      string
+	Passed    bool
+	FailureMsg string
 }
 
 // testResultTracker tracks all test results for summary
 type testResultTracker struct {
-	mu      sync.Mutex
-	results []TestResult
+	mu           sync.Mutex
+	results      []TestResult
+	failureMsgs  map[string]string // testName -> failure message
 }
 
-var globalTestTracker = &testResultTracker{}
+var globalTestTracker = &testResultTracker{
+	failureMsgs: make(map[string]string),
+}
+
+// RecordFailureMessage records a failure message for a test
+func (tr *testResultTracker) RecordFailureMessage(testName, msg string) {
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
+	// Keep only the first failure message (usually most relevant)
+	if _, exists := tr.failureMsgs[testName]; !exists {
+		tr.failureMsgs[testName] = msg
+	}
+}
 
 // RecordResult records a test result
-func (t *testResultTracker) RecordResult(name string, passed bool) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	t.results = append(t.results, TestResult{Name: name, Passed: passed})
+func (tr *testResultTracker) RecordResult(name string, passed bool) {
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
+	result := TestResult{Name: name, Passed: passed}
+	if !passed {
+		if msg, exists := tr.failureMsgs[name]; exists {
+			result.FailureMsg = msg
+		}
+	}
+	tr.results = append(tr.results, result)
 }
 
 // GetFailedTests returns only the failed tests
-func (t *testResultTracker) GetFailedTests() []TestResult {
-	t.mu.Lock()
-	defer t.mu.Unlock()
+func (tr *testResultTracker) GetFailedTests() []TestResult {
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
 	var failed []TestResult
-	for _, r := range t.results {
+	for _, r := range tr.results {
 		if !r.Passed {
 			failed = append(failed, r)
 		}
@@ -89,11 +109,11 @@ func (t *testResultTracker) GetFailedTests() []TestResult {
 }
 
 // GetStats returns total, passed, and failed counts
-func (t *testResultTracker) GetStats() (total, passed, failed int) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	total = len(t.results)
-	for _, r := range t.results {
+func (tr *testResultTracker) GetStats() (total, passed, failed int) {
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
+	total = len(tr.results)
+	for _, r := range tr.results {
 		if r.Passed {
 			passed++
 		} else {
@@ -121,35 +141,55 @@ func RunTracked(t *testing.T, name string, f func(t *testing.T)) bool {
 	})
 }
 
+// FailWithMessage fails the test and records the message for summary.
+// Use this instead of t.Fatalf/t.Errorf when you want the message in summary.
+func FailWithMessage(t *testing.T, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	globalTestTracker.RecordFailureMessage(t.Name(), msg)
+	t.Fatal(msg)
+}
+
+// ErrorWithMessage marks test as failed and records the message for summary.
+// Unlike FailWithMessage, this doesn't stop test execution immediately.
+func ErrorWithMessage(t *testing.T, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	globalTestTracker.RecordFailureMessage(t.Name(), msg)
+	t.Error(msg)
+}
+
 // PrintTestSummary prints a summary of test results to stderr
 func PrintTestSummary() {
 	total, passed, failed := globalTestTracker.GetStats()
 
 	fmt.Fprintln(os.Stderr)
-	fmt.Fprintln(os.Stderr, "╔══════════════════════════════════════════════════════════════════╗")
-	fmt.Fprintln(os.Stderr, "║                        TEST SUMMARY                              ║")
-	fmt.Fprintln(os.Stderr, "╠══════════════════════════════════════════════════════════════════╣")
-	fmt.Fprintf(os.Stderr, "║  Total: %-5d │  Passed: %-5d │  Failed: %-5d                  ║\n", total, passed, failed)
-	fmt.Fprintln(os.Stderr, "╠══════════════════════════════════════════════════════════════════╣")
+	fmt.Fprintln(os.Stderr, "========================================")
+	fmt.Fprintln(os.Stderr, "           TEST SUMMARY")
+	fmt.Fprintln(os.Stderr, "========================================")
+	fmt.Fprintf(os.Stderr, "Total: %d  |  Passed: %d  |  Failed: %d\n", total, passed, failed)
+	fmt.Fprintln(os.Stderr, "----------------------------------------")
 
 	if failed == 0 {
-		fmt.Fprintln(os.Stderr, "║  ✅ ALL TESTS PASSED                                             ║")
+		fmt.Fprintln(os.Stderr, "✅ ALL TESTS PASSED")
 	} else {
-		fmt.Fprintln(os.Stderr, "║  ❌ FAILED TESTS:                                                ║")
-		fmt.Fprintln(os.Stderr, "╠══════════════════════════════════════════════════════════════════╣")
+		fmt.Fprintln(os.Stderr, "❌ FAILED TESTS:")
+		fmt.Fprintln(os.Stderr)
 
 		failedTests := globalTestTracker.GetFailedTests()
 		for i, test := range failedTests {
-			// Truncate long test names to fit in the box
-			name := test.Name
-			if len(name) > 60 {
-				name = name[:57] + "..."
+			fmt.Fprintf(os.Stderr, "  %d. %s\n", i+1, test.Name)
+			if test.FailureMsg != "" {
+				// Indent the failure message and handle multi-line
+				lines := strings.Split(test.FailureMsg, "\n")
+				for _, line := range lines {
+					if line != "" {
+						fmt.Fprintf(os.Stderr, "     → %s\n", line)
+					}
+				}
 			}
-			fmt.Fprintf(os.Stderr, "║  %3d. %-60s║\n", i+1, name)
 		}
 	}
 
-	fmt.Fprintln(os.Stderr, "╚══════════════════════════════════════════════════════════════════╝")
+	fmt.Fprintln(os.Stderr, "========================================")
 	fmt.Fprintln(os.Stderr)
 }
 

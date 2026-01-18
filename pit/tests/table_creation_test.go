@@ -55,6 +55,7 @@ func readPeopleSchema() (*openapi1.TableSchema, error) {
 }
 
 func createTable(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, tableSchema *openapi1.TableSchema, mayFail bool) (string, *http.Response, error) {
+	t.Log(pit.FormatRequest("PUT", "/table", tableSchema))
 	tableId, resp, err := apiClient.SchemaAPI.CreateTable(ctx).TableSchema(*tableSchema).Execute()
 	t.Log(pit.FormatResponse(resp))
 	if !mayFail {
@@ -65,6 +66,7 @@ func createTable(t *testing.T, apiClient *openapi1.APIClient, ctx context.Contex
 }
 
 func deleteTable(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, tableId string) (*http.Response, error) {
+	t.Logf("Sending request:\nDELETE /table/%s", tableId)
 	resp, err := apiClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
 	t.Log(pit.FormatResponse(resp))
 	require.NoError(t, err)
@@ -74,8 +76,8 @@ func deleteTable(t *testing.T, apiClient *openapi1.APIClient, ctx context.Contex
 
 func createTableWithCleanup(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, schema *openapi1.TableSchema) string {
 	// Create table
+	t.Log(pit.FormatRequest("PUT", "/table", schema))
 	tableId, resp, err := apiClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
-
 	t.Log(pit.FormatResponse(resp))
 
 	require.NoError(t, err)
@@ -83,11 +85,11 @@ func createTableWithCleanup(t *testing.T, apiClient *openapi1.APIClient, ctx con
 	require.NotEmpty(t, tableId)
 
 	t.Cleanup(func() {
+		t.Logf("Sending request:\nDELETE /table/%s", tableId)
 		resp, err := apiClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
-
 		t.Log(pit.FormatResponse(resp))
 
-		// Log errof instead of panic
+		// Log error instead of panic
 		if err != nil || resp.StatusCode != http.StatusOK {
 			t.Errorf("Cleanup failed: Could not delete table %s: %v, status: %d", tableId, err, resp.StatusCode)
 		}
@@ -105,6 +107,7 @@ func TestTableCreation(t *testing.T) {
 	require.NoError(t, err)
 
 	RunTracked(t, "TableEmptyList", func(t *testing.T) {
+		t.Log("Sending request:\nGET /tables")
 		tables, resp, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
@@ -117,6 +120,7 @@ func TestTableCreation(t *testing.T) {
 		_ = createTableWithCleanup(t, dbClient, ctx, peopleSchema)
 
 		// List tables and verify the table exists
+		t.Log("Sending request:\nGET /tables")
 		tables, resp, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
@@ -130,6 +134,7 @@ func TestTableCreation(t *testing.T) {
 		tableId := createTableWithCleanup(t, dbClient, ctx, peopleSchema)
 
 		// Get table details
+		t.Logf("Sending request:\nGET /table/%s", tableId)
 		details, resp, err := dbClient.SchemaAPI.GetTableById(ctx, tableId).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
@@ -174,6 +179,7 @@ func TestTableCreation(t *testing.T) {
 		_, _ = deleteTable(t, dbClient, ctx, tableId)
 
 		// Try to delete the table again - should fail
+		t.Logf("Sending request:\nDELETE /table/%s", tableId)
 		resp, _ := dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -187,6 +193,7 @@ func TestTableCreation(t *testing.T) {
 		_, _ = deleteTable(t, dbClient, ctx, tableId)
 
 		// Try to get details of deleted table - should fail
+		t.Logf("Sending request:\nGET /table/%s", tableId)
 		_, resp, _ := dbClient.SchemaAPI.GetTableById(ctx, tableId).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -210,11 +217,13 @@ func TestTableCreation_Atomicity(t *testing.T) {
 			},
 		}
 
+		t.Log(pit.FormatRequest("PUT", "/table", invalidSchema))
 		_, resp, _ := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*invalidSchema).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		// Verify table does NOT exist (no partial state)
+		t.Log("Sending request:\nGET /tables")
 		tables, _, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
 		require.NoError(t, err)
 		for _, table := range tables {
@@ -231,6 +240,7 @@ func TestTableCreation_Atomicity(t *testing.T) {
 			},
 		}
 
+		t.Log(pit.FormatRequest("PUT", "/table", schema))
 		_, resp, _ := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -242,11 +252,13 @@ func TestTableCreation_Atomicity(t *testing.T) {
 			Columns: []openapi1.Column{},
 		}
 
+		t.Log(pit.FormatRequest("PUT", "/table", schema))
 		_, resp, _ := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		// Verify table does NOT exist
+		t.Log("Sending request:\nGET /tables")
 		tables, _, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
 		require.NoError(t, err)
 		for _, table := range tables {
@@ -264,11 +276,13 @@ func TestTableCreation_Atomicity(t *testing.T) {
 			},
 		}
 
+		t.Log(pit.FormatRequest("PUT", "/table", schema))
 		_, resp, _ := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		// Verify table does NOT exist
+		t.Log("Sending request:\nGET /tables")
 		tables, _, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
 		require.NoError(t, err)
 		for _, table := range tables {
@@ -278,6 +292,7 @@ func TestTableCreation_Atomicity(t *testing.T) {
 	})
 
 	RunTracked(t, "DeleteNonExistent_ReturnsNotFound", func(t *testing.T) {
+		t.Log("Sending request:\nDELETE /table/non_existent_id_12345")
 		resp, _ := dbClient.SchemaAPI.DeleteTable(ctx, "non_existent_id_12345").Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -288,32 +303,43 @@ func TestTableCreation_Atomicity(t *testing.T) {
 		schema, err := readPeopleSchema()
 		require.NoError(t, err)
 
-		tableId, _, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+		t.Log(pit.FormatRequest("PUT", "/table", schema))
+		tableId, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 
 		// Try to delete by name instead of ID - should fail
-		resp, _ := dbClient.SchemaAPI.DeleteTable(ctx, "people").Execute()
+		t.Log("Sending request:\nDELETE /table/people")
+		resp, _ = dbClient.SchemaAPI.DeleteTable(ctx, "people").Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 
 		// Table should still exist
+		t.Logf("Sending request:\nGET /table/%s", tableId)
 		_, resp, err = dbClient.SchemaAPI.GetTableById(ctx, tableId).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Cleanup
-		dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+		t.Logf("Sending request:\nDELETE /table/%s", tableId)
+		resp, _ = dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+		t.Log(pit.FormatResponse(resp))
 	})
 
 	RunTracked(t, "AfterDelete_NotInList", func(t *testing.T) {
 		schema, err := readPeopleSchema()
 		require.NoError(t, err)
 
-		tableId, _, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+		t.Log(pit.FormatRequest("PUT", "/table", schema))
+		tableId, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 
 		// Verify table is in list
-		tables, _, _ := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		t.Log("Sending request:\nGET /tables")
+		tables, resp, _ := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		t.Log(pit.FormatResponse(resp))
 		found := false
 		for _, table := range tables {
 			if table.GetName() == "people" {
@@ -324,12 +350,16 @@ func TestTableCreation_Atomicity(t *testing.T) {
 		require.True(t, found, "Table should be in list after creation")
 
 		// Delete table
-		resp, err := dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+		t.Logf("Sending request:\nDELETE /table/%s", tableId)
+		resp, err = dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify table is NOT in list
-		tables, _, _ = dbClient.SchemaAPI.GetTables(ctx).Execute()
+		t.Log("Sending request:\nGET /tables")
+		tables, resp, _ = dbClient.SchemaAPI.GetTables(ctx).Execute()
+		t.Log(pit.FormatResponse(resp))
 		for _, table := range tables {
 			require.NotEqual(t, "people", table.GetName(),
 				"Deleted table should not be in list")
