@@ -137,7 +137,7 @@ func parameterValueToString(obj interface{}, key string) string {
 		}
 
 		s := fmt.Sprintf("%v", obj)
-		return s[1 : len(s)-1]
+		return strings.Trim(s, "\"")
 	}
 	var param, ok = obj.(MappedNullable)
 	if !ok {
