@@ -191,5 +191,148 @@ func TestTableCreation(t *testing.T) {
 		t.Log(pit.FormatResponse(resp))
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
+}
 
+// ============================================================================
+// CREATE TABLE - Atomicity Tests
+// ============================================================================
+
+func TestTableCreation_Atomicity(t *testing.T) {
+	dbClient := pit.DbClient1(BaseURL)
+	ctx := context.Background()
+
+	t.Run("CreateWithInvalidColumnType_NoPartialState", func(t *testing.T) {
+		// Schema with invalid column type
+		invalidSchema := &openapi1.TableSchema{
+			Name: "invalid_type_table",
+			Columns: []openapi1.Column{
+				{Name: "col1", Type: "INVALID_TYPE"},
+			},
+		}
+
+		_, resp, _ := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*invalidSchema).Execute()
+		t.Log(pit.FormatResponse(resp))
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		// Verify table does NOT exist (no partial state)
+		tables, _, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		require.NoError(t, err)
+		for _, table := range tables {
+			require.NotEqual(t, "invalid_type_table", table.Name,
+				"Table should not exist after failed creation")
+		}
+	})
+
+	t.Run("CreateWithEmptyName_Fails", func(t *testing.T) {
+		schema := &openapi1.TableSchema{
+			Name: "",
+			Columns: []openapi1.Column{
+				{Name: "col1", Type: openapi1.INT64},
+			},
+		}
+
+		_, resp, _ := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+		t.Log(pit.FormatResponse(resp))
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("CreateWithEmptyColumns_Fails", func(t *testing.T) {
+		schema := &openapi1.TableSchema{
+			Name:    "empty_cols_table",
+			Columns: []openapi1.Column{},
+		}
+
+		_, resp, _ := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+		t.Log(pit.FormatResponse(resp))
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		// Verify table does NOT exist
+		tables, _, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		require.NoError(t, err)
+		for _, table := range tables {
+			require.NotEqual(t, "empty_cols_table", table.Name,
+				"Table should not exist after failed creation")
+		}
+	})
+
+	t.Run("CreateWithDuplicateColumnNames_Fails", func(t *testing.T) {
+		schema := &openapi1.TableSchema{
+			Name: "dup_cols_table",
+			Columns: []openapi1.Column{
+				{Name: "col1", Type: openapi1.INT64},
+				{Name: "col1", Type: openapi1.VARCHAR}, // Duplicate!
+			},
+		}
+
+		_, resp, _ := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+		t.Log(pit.FormatResponse(resp))
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		// Verify table does NOT exist
+		tables, _, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		require.NoError(t, err)
+		for _, table := range tables {
+			require.NotEqual(t, "dup_cols_table", table.Name,
+				"Table should not exist after failed creation")
+		}
+	})
+
+	t.Run("DeleteNonExistent_ReturnsNotFound", func(t *testing.T) {
+		resp, _ := dbClient.SchemaAPI.DeleteTable(ctx, "non_existent_id_12345").Execute()
+		t.Log(pit.FormatResponse(resp))
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+	})
+
+	t.Run("DeleteById_NotByName", func(t *testing.T) {
+		// Create a table
+		schema, err := readPeopleSchema()
+		require.NoError(t, err)
+
+		tableId, _, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+		require.NoError(t, err)
+
+		// Try to delete by name instead of ID - should fail
+		resp, _ := dbClient.SchemaAPI.DeleteTable(ctx, "people").Execute()
+		t.Log(pit.FormatResponse(resp))
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+		// Table should still exist
+		_, resp, err = dbClient.SchemaAPI.GetTableById(ctx, tableId).Execute()
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		// Cleanup
+		dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+	})
+
+	t.Run("AfterDelete_NotInList", func(t *testing.T) {
+		schema, err := readPeopleSchema()
+		require.NoError(t, err)
+
+		tableId, _, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+		require.NoError(t, err)
+
+		// Verify table is in list
+		tables, _, _ := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		found := false
+		for _, table := range tables {
+			if table.GetName() == "people" {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "Table should be in list after creation")
+
+		// Delete table
+		resp, err := dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		// Verify table is NOT in list
+		tables, _, _ = dbClient.SchemaAPI.GetTables(ctx).Execute()
+		for _, table := range tables {
+			require.NotEqual(t, "people", table.GetName(),
+				"Deleted table should not be in list")
+		}
+	})
 }
