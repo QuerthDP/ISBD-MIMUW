@@ -21,7 +21,7 @@ func TestV1_Copy(t *testing.T) {
 	dbClient := DbClientV1(BaseURL)
 	ctx := context.Background()
 
-	t.Run("Copy_Success", func(t *testing.T) {
+	RunTracked(t, "Copy_Success", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 
 		// Execute COPY
@@ -33,7 +33,7 @@ func TestV1_Copy(t *testing.T) {
 		require.Len(t, rows, 5, "Should have 5 rows after COPY")
 	})
 
-	t.Run("Copy_ToNonExistentTable_Fails", func(t *testing.T) {
+	RunTracked(t, "Copy_ToNonExistentTable_Fails", func(t *testing.T) {
 		queryId, resp, err := SubmitCopyQueryV1(dbClient, ctx,
 			"/data/tables/people/data.csv",
 			"non_existent_table_xyz",
@@ -51,7 +51,7 @@ func TestV1_Copy(t *testing.T) {
 		}
 	})
 
-	t.Run("Copy_WithInvalidPath_Fails", func(t *testing.T) {
+	RunTracked(t, "Copy_WithInvalidPath_Fails", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 
 		queryId, resp, err := SubmitCopyQueryV1(dbClient, ctx,
@@ -67,7 +67,7 @@ func TestV1_Copy(t *testing.T) {
 		}
 	})
 
-	t.Run("Copy_InvalidPath_NoPartialData", func(t *testing.T) {
+	RunTracked(t, "Copy_InvalidPath_NoPartialData", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 
 		// Try to COPY from invalid path
@@ -86,7 +86,7 @@ func TestV1_Copy(t *testing.T) {
 		require.Empty(t, rows, "Table should be empty after failed COPY")
 	})
 
-	t.Run("Copy_MultipleTimes_AccumulatesData", func(t *testing.T) {
+	RunTracked(t, "Copy_MultipleTimes_AccumulatesData", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "types_test")
 
 		// First COPY
@@ -104,7 +104,7 @@ func TestV1_Copy(t *testing.T) {
 			"Second COPY should double the row count")
 	})
 
-	t.Run("Copy_WithHeader_ParsesCorrectly", func(t *testing.T) {
+	RunTracked(t, "Copy_WithHeader_ParsesCorrectly", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 
 		// COPY with header=true
@@ -125,7 +125,7 @@ func TestV1_Copy(t *testing.T) {
 		require.Len(t, rows, 5, "Should have 5 data rows (header excluded)")
 	})
 
-	t.Run("Copy_EmptyTable_SelectReturnsEmpty", func(t *testing.T) {
+	RunTracked(t, "Copy_EmptyTable_SelectReturnsEmpty", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 		// No COPY executed
 
@@ -145,7 +145,7 @@ func TestV1_Copy_Atomicity(t *testing.T) {
 	dbClient := DbClientV1(BaseURL)
 	ctx := context.Background()
 
-	t.Run("Copy_FailureDoesNotAffectExistingData", func(t *testing.T) {
+	RunTracked(t, "Copy_FailureDoesNotAffectExistingData", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "types_test")
 
 		// First, load some valid data
@@ -171,7 +171,7 @@ func TestV1_Copy_Atomicity(t *testing.T) {
 			"Failed COPY should not affect existing data")
 	})
 
-	t.Run("Copy_QueryStatusTransitions", func(t *testing.T) {
+	RunTracked(t, "Copy_QueryStatusTransitions", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 
 		queryId, resp, err := SubmitCopyQueryV1(dbClient, ctx,

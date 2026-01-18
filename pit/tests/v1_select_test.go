@@ -20,7 +20,7 @@ func TestV1_SelectStar(t *testing.T) {
 	dbClient := DbClientV1(BaseURL)
 	ctx := context.Background()
 
-	t.Run("SelectStar_EmptyTable", func(t *testing.T) {
+	RunTracked(t, "SelectStar_EmptyTable", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 		// No COPY - table is empty
 
@@ -29,7 +29,7 @@ func TestV1_SelectStar(t *testing.T) {
 		require.Empty(t, rows, "Empty table should return no rows")
 	})
 
-	t.Run("SelectStar_AfterCopy_AllDataPresent", func(t *testing.T) {
+	RunTracked(t, "SelectStar_AfterCopy_AllDataPresent", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 		LoadTestDataV1(t, dbClient, ctx, "people")
 
@@ -39,7 +39,7 @@ func TestV1_SelectStar(t *testing.T) {
 		require.Len(t, rows, 5, "Should return all 5 rows from people.csv")
 	})
 
-	t.Run("SelectStar_CorrectColumnCount", func(t *testing.T) {
+	RunTracked(t, "SelectStar_CorrectColumnCount", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 		LoadTestDataV1(t, dbClient, ctx, "people")
 
@@ -51,7 +51,7 @@ func TestV1_SelectStar(t *testing.T) {
 		require.Len(t, rows[0], 4, "Should have 4 columns (id, name, surname, age)")
 	})
 
-	t.Run("SelectStar_NonExistentTable_Fails", func(t *testing.T) {
+	RunTracked(t, "SelectStar_NonExistentTable_Fails", func(t *testing.T) {
 		queryId, resp, err := SubmitSelectStarQueryV1(dbClient, ctx, "non_existent_table_xyz")
 
 		// May fail at submission (400) or during execution (FAILED)
@@ -66,7 +66,7 @@ func TestV1_SelectStar(t *testing.T) {
 		}
 	})
 
-	t.Run("SelectStar_DataTypes_INT64", func(t *testing.T) {
+	RunTracked(t, "SelectStar_DataTypes_INT64", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "types_test")
 		LoadTestDataV1(t, dbClient, ctx, "types_test")
 
@@ -91,7 +91,7 @@ func TestV1_SelectStar(t *testing.T) {
 		require.True(t, foundInt64, "Should have INT64 values in result")
 	})
 
-	t.Run("SelectStar_DataTypes_VARCHAR", func(t *testing.T) {
+	RunTracked(t, "SelectStar_DataTypes_VARCHAR", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "types_test")
 		LoadTestDataV1(t, dbClient, ctx, "types_test")
 
@@ -116,7 +116,7 @@ func TestV1_SelectStar(t *testing.T) {
 		require.True(t, foundString, "Should have VARCHAR values in result")
 	})
 
-	t.Run("SelectStar_AfterMultipleCopy", func(t *testing.T) {
+	RunTracked(t, "SelectStar_AfterMultipleCopy", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "types_test")
 
 		// COPY twice
@@ -130,7 +130,7 @@ func TestV1_SelectStar(t *testing.T) {
 		require.Len(t, rows, 6, "Should have 6 rows after 2 COPYs")
 	})
 
-	t.Run("SelectStar_QueryStatusTransitions", func(t *testing.T) {
+	RunTracked(t, "SelectStar_QueryStatusTransitions", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 		LoadTestDataV1(t, dbClient, ctx, "people")
 
@@ -144,7 +144,7 @@ func TestV1_SelectStar(t *testing.T) {
 		require.Equal(t, openapi1.COMPLETED, query.GetStatus())
 	})
 
-	t.Run("SelectStar_ResultFlush", func(t *testing.T) {
+	RunTracked(t, "SelectStar_ResultFlush", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 		LoadTestDataV1(t, dbClient, ctx, "people")
 

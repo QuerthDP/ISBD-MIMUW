@@ -20,7 +20,7 @@ func TestV1_StateConsistency(t *testing.T) {
 	dbClient := DbClientV1(BaseURL)
 	ctx := context.Background()
 
-	t.Run("CreateDeleteCreate_SameName", func(t *testing.T) {
+	RunTracked(t, "CreateDeleteCreate_SameName", func(t *testing.T) {
 		schema, err := ReadTableSchemaV1("people")
 		require.NoError(t, err)
 
@@ -47,7 +47,7 @@ func TestV1_StateConsistency(t *testing.T) {
 		dbClient.SchemaAPI.DeleteTable(ctx, tableId2).Execute()
 	})
 
-	t.Run("CopyThenSelect_DataImmediatelyVisible", func(t *testing.T) {
+	RunTracked(t, "CopyThenSelect_DataImmediatelyVisible", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 		LoadTestDataV1(t, dbClient, ctx, "people")
 
@@ -57,7 +57,7 @@ func TestV1_StateConsistency(t *testing.T) {
 		require.Len(t, rows, 5, "Data should be visible immediately after COPY")
 	})
 
-	t.Run("MultipleTables_Isolation", func(t *testing.T) {
+	RunTracked(t, "MultipleTables_Isolation", func(t *testing.T) {
 		// Create two tables
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 		_ = SetupTestTableV1(t, dbClient, ctx, "types_test")
@@ -76,7 +76,7 @@ func TestV1_StateConsistency(t *testing.T) {
 		require.Len(t, rows, 5, "people should have 5 rows")
 	})
 
-	t.Run("DeleteTable_RemovesFromList", func(t *testing.T) {
+	RunTracked(t, "DeleteTable_RemovesFromList", func(t *testing.T) {
 		schema, err := ReadTableSchemaV1("people")
 		require.NoError(t, err)
 
@@ -111,7 +111,7 @@ func TestV1_StateConsistency(t *testing.T) {
 		}
 	})
 
-	t.Run("DeleteTable_DetailsNotAccessible", func(t *testing.T) {
+	RunTracked(t, "DeleteTable_DetailsNotAccessible", func(t *testing.T) {
 		schema, err := ReadTableSchemaV1("people")
 		require.NoError(t, err)
 
@@ -131,7 +131,7 @@ func TestV1_StateConsistency(t *testing.T) {
 			"Deleted table details should return 404")
 	})
 
-	t.Run("MultipleQueries_SameTable", func(t *testing.T) {
+	RunTracked(t, "MultipleQueries_SameTable", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "types_test")
 		LoadTestDataV1(t, dbClient, ctx, "types_test")
 
@@ -143,7 +143,7 @@ func TestV1_StateConsistency(t *testing.T) {
 		}
 	})
 
-	t.Run("TableListConsistency", func(t *testing.T) {
+	RunTracked(t, "TableListConsistency", func(t *testing.T) {
 		// Get initial table count
 		initialTables, _, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
 		require.NoError(t, err)
@@ -173,7 +173,7 @@ func TestV1_TableSchemaConsistency(t *testing.T) {
 	dbClient := DbClientV1(BaseURL)
 	ctx := context.Background()
 
-	t.Run("Schema_MatchesCreatedSchema", func(t *testing.T) {
+	RunTracked(t, "Schema_MatchesCreatedSchema", func(t *testing.T) {
 		schema, err := ReadTableSchemaV1("people")
 		require.NoError(t, err)
 
@@ -192,7 +192,7 @@ func TestV1_TableSchemaConsistency(t *testing.T) {
 		require.Equal(t, len(schema.Columns), len(details.Columns))
 	})
 
-	t.Run("Schema_ColumnTypes_Preserved", func(t *testing.T) {
+	RunTracked(t, "Schema_ColumnTypes_Preserved", func(t *testing.T) {
 		schema := &openapi1.TableSchema{
 			Name: "test_types",
 			Columns: []openapi1.Column{

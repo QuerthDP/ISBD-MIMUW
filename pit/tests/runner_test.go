@@ -92,7 +92,7 @@ func (r *ValidationTestRunner) submitQuery(tc ValidationTestCase) SubmittedValid
 func (r *ValidationTestRunner) RunSync() {
 	for _, tc := range r.cases {
 		tc := tc
-		r.t.Run(tc.Name, func(t *testing.T) {
+		RunTracked(r.t, tc.Name, func(t *testing.T) {
 			submitted := r.submitQuery(tc)
 			if tc.ExpectSuccess {
 				r.assertSuccess(t, submitted)
@@ -124,7 +124,7 @@ func (r *ValidationTestRunner) RunAsync() {
 	// Phase 2: Wait and verify all results
 	for i, submitted := range r.submitted {
 		submitted := submitted
-		r.t.Run(submitted.TestCase.Name, func(t *testing.T) {
+		RunTracked(r.t, submitted.TestCase.Name, func(t *testing.T) {
 			t.Logf("Checking [%d/%d] %s", i+1, len(r.submitted), submitted.TestCase.Name)
 			if submitted.TestCase.ExpectSuccess {
 				r.assertSuccess(t, submitted)
@@ -261,7 +261,7 @@ func (r *FunctionalTestRunner) submitQuery(tc FunctionalTestCase) SubmittedFunct
 func (r *FunctionalTestRunner) RunSync() {
 	for _, tc := range r.cases {
 		tc := tc
-		r.t.Run(tc.Name, func(t *testing.T) {
+		RunTracked(r.t, tc.Name, func(t *testing.T) {
 			submitted := r.submitQuery(tc)
 			r.assertResult(t, submitted)
 		})
@@ -289,7 +289,7 @@ func (r *FunctionalTestRunner) RunAsync() {
 	// Phase 2: Wait and verify all results
 	for i, submitted := range r.submitted {
 		submitted := submitted
-		r.t.Run(submitted.TestCase.Name, func(t *testing.T) {
+		RunTracked(r.t, submitted.TestCase.Name, func(t *testing.T) {
 			t.Logf("Checking [%d/%d] %s", i+1, len(r.submitted), submitted.TestCase.Name)
 			r.assertResult(t, submitted)
 		})

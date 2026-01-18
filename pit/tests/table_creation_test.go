@@ -104,7 +104,7 @@ func TestTableCreation(t *testing.T) {
 	peopleSchema, err := readPeopleSchema()
 	require.NoError(t, err)
 
-	t.Run("TableEmptyList", func(t *testing.T) {
+	RunTracked(t, "TableEmptyList", func(t *testing.T) {
 		tables, resp, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
@@ -112,7 +112,7 @@ func TestTableCreation(t *testing.T) {
 		require.Len(t, tables, 0)
 	})
 
-	t.Run("TableCreationAndList", func(t *testing.T) {
+	RunTracked(t, "TableCreationAndList", func(t *testing.T) {
 		// Create the people table
 		_ = createTableWithCleanup(t, dbClient, ctx, peopleSchema)
 
@@ -125,7 +125,7 @@ func TestTableCreation(t *testing.T) {
 		require.Equal(t, "people", tables[0].Name)
 	})
 
-	t.Run("TableCreationAndDetails", func(t *testing.T) {
+	RunTracked(t, "TableCreationAndDetails", func(t *testing.T) {
 		// Create the people table
 		tableId := createTableWithCleanup(t, dbClient, ctx, peopleSchema)
 
@@ -144,7 +144,7 @@ func TestTableCreation(t *testing.T) {
 		require.Equal(t, *peopleSchema, *details)
 	})
 
-	t.Run("TableDoubleCreation", func(t *testing.T) {
+	RunTracked(t, "TableDoubleCreation", func(t *testing.T) {
 		// Create the people table
 		_ = createTableWithCleanup(t, dbClient, ctx, peopleSchema)
 
@@ -156,7 +156,7 @@ func TestTableCreation(t *testing.T) {
 		_ = createTableWithCleanup(t, dbClient, ctx, peopleSchema2)
 	})
 
-	t.Run("TableDoubleNameCreation", func(t *testing.T) {
+	RunTracked(t, "TableDoubleNameCreation", func(t *testing.T) {
 		// Create the people table
 		_ = createTableWithCleanup(t, dbClient, ctx, peopleSchema)
 
@@ -166,7 +166,7 @@ func TestTableCreation(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
-	t.Run("TableDoubleRemove", func(t *testing.T) {
+	RunTracked(t, "TableDoubleRemove", func(t *testing.T) {
 		// Create the people table
 		tableId, _, _ := createTable(t, dbClient, ctx, peopleSchema, false)
 
@@ -179,7 +179,7 @@ func TestTableCreation(t *testing.T) {
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
-	t.Run("TableNoDetailsAfterRemoval", func(t *testing.T) {
+	RunTracked(t, "TableNoDetailsAfterRemoval", func(t *testing.T) {
 		// Create the people table
 		tableId, _, _ := createTable(t, dbClient, ctx, peopleSchema, false)
 
@@ -201,7 +201,7 @@ func TestTableCreation_Atomicity(t *testing.T) {
 	dbClient := pit.DbClient1(BaseURL)
 	ctx := context.Background()
 
-	t.Run("CreateWithInvalidColumnType_NoPartialState", func(t *testing.T) {
+	RunTracked(t, "CreateWithInvalidColumnType_NoPartialState", func(t *testing.T) {
 		// Schema with invalid column type
 		invalidSchema := &openapi1.TableSchema{
 			Name: "invalid_type_table",
@@ -223,7 +223,7 @@ func TestTableCreation_Atomicity(t *testing.T) {
 		}
 	})
 
-	t.Run("CreateWithEmptyName_Fails", func(t *testing.T) {
+	RunTracked(t, "CreateWithEmptyName_Fails", func(t *testing.T) {
 		schema := &openapi1.TableSchema{
 			Name: "",
 			Columns: []openapi1.Column{
@@ -236,7 +236,7 @@ func TestTableCreation_Atomicity(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
-	t.Run("CreateWithEmptyColumns_Fails", func(t *testing.T) {
+	RunTracked(t, "CreateWithEmptyColumns_Fails", func(t *testing.T) {
 		schema := &openapi1.TableSchema{
 			Name:    "empty_cols_table",
 			Columns: []openapi1.Column{},
@@ -255,7 +255,7 @@ func TestTableCreation_Atomicity(t *testing.T) {
 		}
 	})
 
-	t.Run("CreateWithDuplicateColumnNames_Fails", func(t *testing.T) {
+	RunTracked(t, "CreateWithDuplicateColumnNames_Fails", func(t *testing.T) {
 		schema := &openapi1.TableSchema{
 			Name: "dup_cols_table",
 			Columns: []openapi1.Column{
@@ -277,13 +277,13 @@ func TestTableCreation_Atomicity(t *testing.T) {
 		}
 	})
 
-	t.Run("DeleteNonExistent_ReturnsNotFound", func(t *testing.T) {
+	RunTracked(t, "DeleteNonExistent_ReturnsNotFound", func(t *testing.T) {
 		resp, _ := dbClient.SchemaAPI.DeleteTable(ctx, "non_existent_id_12345").Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
-	t.Run("DeleteById_NotByName", func(t *testing.T) {
+	RunTracked(t, "DeleteById_NotByName", func(t *testing.T) {
 		// Create a table
 		schema, err := readPeopleSchema()
 		require.NoError(t, err)
@@ -305,7 +305,7 @@ func TestTableCreation_Atomicity(t *testing.T) {
 		dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
 	})
 
-	t.Run("AfterDelete_NotInList", func(t *testing.T) {
+	RunTracked(t, "AfterDelete_NotInList", func(t *testing.T) {
 		schema, err := readPeopleSchema()
 		require.NoError(t, err)
 

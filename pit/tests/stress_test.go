@@ -209,7 +209,7 @@ func TestStress_Incremental(t *testing.T) {
 	for _, mult := range multipliers {
 		mult := mult
 		testName := fmt.Sprintf("%.1fx_memory", mult)
-		t.Run(testName, func(t *testing.T) {
+		RunTracked(t, testName, func(t *testing.T) {
 			targetBytes := int64(float64(DbMemoryBytes) * mult)
 			exactDepth := calculateExponentialDepth(targetBytes)
 			depth := int(math.Ceil(exactDepth))

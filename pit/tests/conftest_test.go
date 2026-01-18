@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -48,6 +49,109 @@ var (
 	dbMemoryFlag     = flag.Int64("db-memory", 0, "Database available memory in bytes for stress tests (0 = skip stress tests)")
 	interfaceVerFlag = flag.Int("interface-version", 0, "Interface version to test: 1=Project3 (basic), 2=Project4 (extended), 0=all (env: INTERFACE_VERSION)")
 )
+
+// ============================================================================
+// Test Result Tracking
+// ============================================================================
+
+// TestResult holds information about a test execution
+type TestResult struct {
+	Name   string
+	Passed bool
+}
+
+// testResultTracker tracks all test results for summary
+type testResultTracker struct {
+	mu      sync.Mutex
+	results []TestResult
+}
+
+var globalTestTracker = &testResultTracker{}
+
+// RecordResult records a test result
+func (t *testResultTracker) RecordResult(name string, passed bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.results = append(t.results, TestResult{Name: name, Passed: passed})
+}
+
+// GetFailedTests returns only the failed tests
+func (t *testResultTracker) GetFailedTests() []TestResult {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	var failed []TestResult
+	for _, r := range t.results {
+		if !r.Passed {
+			failed = append(failed, r)
+		}
+	}
+	return failed
+}
+
+// GetStats returns total, passed, and failed counts
+func (t *testResultTracker) GetStats() (total, passed, failed int) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	total = len(t.results)
+	for _, r := range t.results {
+		if r.Passed {
+			passed++
+		} else {
+			failed++
+		}
+	}
+	return total, passed, failed
+}
+
+// TrackTest registers a test for result tracking. Call at the start of each test.
+// The test result will be recorded when the test completes.
+func TrackTest(t *testing.T) {
+	testName := t.Name()
+	t.Cleanup(func() {
+		globalTestTracker.RecordResult(testName, !t.Failed())
+	})
+}
+
+// RunTracked is a wrapper around t.Run that automatically tracks test results.
+// Use this instead of t.Run() for automatic result tracking.
+func RunTracked(t *testing.T, name string, f func(t *testing.T)) bool {
+	return t.Run(name, func(t *testing.T) {
+		TrackTest(t)
+		f(t)
+	})
+}
+
+// PrintTestSummary prints a summary of test results to stderr
+func PrintTestSummary() {
+	total, passed, failed := globalTestTracker.GetStats()
+
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "╔══════════════════════════════════════════════════════════════════╗")
+	fmt.Fprintln(os.Stderr, "║                        TEST SUMMARY                              ║")
+	fmt.Fprintln(os.Stderr, "╠══════════════════════════════════════════════════════════════════╣")
+	fmt.Fprintf(os.Stderr, "║  Total: %-5d │  Passed: %-5d │  Failed: %-5d                  ║\n", total, passed, failed)
+	fmt.Fprintln(os.Stderr, "╠══════════════════════════════════════════════════════════════════╣")
+
+	if failed == 0 {
+		fmt.Fprintln(os.Stderr, "║  ✅ ALL TESTS PASSED                                             ║")
+	} else {
+		fmt.Fprintln(os.Stderr, "║  ❌ FAILED TESTS:                                                ║")
+		fmt.Fprintln(os.Stderr, "╠══════════════════════════════════════════════════════════════════╣")
+
+		failedTests := globalTestTracker.GetFailedTests()
+		for i, test := range failedTests {
+			// Truncate long test names to fit in the box
+			name := test.Name
+			if len(name) > 60 {
+				name = name[:57] + "..."
+			}
+			fmt.Fprintf(os.Stderr, "║  %3d. %-60s║\n", i+1, name)
+		}
+	}
+
+	fmt.Fprintln(os.Stderr, "╚══════════════════════════════════════════════════════════════════╝")
+	fmt.Fprintln(os.Stderr)
+}
 
 func applyFlagToEnv() {
 	if *dbImage != "" {
@@ -106,6 +210,9 @@ func TestMain(m *testing.M) {
 	BaseURL = base
 
 	code := m.Run()
+
+	// Print test summary before teardown
+	PrintTestSummary()
 
 	if teardown != nil {
 		teardown()
