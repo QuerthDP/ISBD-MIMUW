@@ -25,39 +25,45 @@ import (
 func TestV1_Stress_CopyAtomicity(t *testing.T) {
 	RequireInterfaceVersion(t, 1)
 
-	const iterations = 100
-
-	dbClient := DbClientV1(BaseURL)
-	ctx := context.Background()
-
-	// Track totals across all iterations
-	totalSelects := 0
-	totalPartial := 0
-
-	for iter := 0; iter < iterations; iter++ {
-		// Create fresh table for each iteration
-		tableId := CreateTableV1(t, dbClient, ctx, mustReadSchemaV1(t, "stress_rows"))
-
-		// Run single atomicity test
-		selects, partial := runCopyAtomicityTest(t, dbClient, ctx, "stress_rows", iter+1, iterations)
-		totalSelects += selects
-		totalPartial += partial
-
-		// Delete table to start fresh
-		dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
-
-		// Fail fast if we detected partial data
-		if partial > 0 {
-			t.Fatalf("Iteration %d/%d: PARTIAL DATA DETECTED! Stopping test.", iter+1, iterations)
-		}
+	if DbMemoryBytes <= 0 {
+		t.Skip("Skipping stress test: -db-memory flag not set")
 	}
 
-	t.Logf("=== FINAL RESULTS ===")
-	t.Logf("Total iterations: %d", iterations)
-	t.Logf("Total SELECT queries: %d", totalSelects)
-	t.Logf("Total partial observations: %d", totalPartial)
+	const iterations = 100
 
-	require.Equal(t, 0, totalPartial, "No partial data should be observed across all iterations")
+	RunTracked(t, "CopyAtomicity_100iterations", func(t *testing.T) {
+		dbClient := DbClientV1(BaseURL)
+		ctx := context.Background()
+
+		// Track totals across all iterations
+		totalSelects := 0
+		totalPartial := 0
+
+		for iter := 0; iter < iterations; iter++ {
+			// Create fresh table for each iteration
+			tableId := CreateTableV1(t, dbClient, ctx, mustReadSchemaV1(t, "stress_rows"))
+
+			// Run single atomicity test
+			selects, partial := runCopyAtomicityTest(t, dbClient, ctx, "stress_rows", iter+1, iterations)
+			totalSelects += selects
+			totalPartial += partial
+
+			// Delete table to start fresh
+			dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+
+			// Fail fast if we detected partial data
+			if partial > 0 {
+				t.Fatalf("Iteration %d/%d: PARTIAL DATA DETECTED! Stopping test.", iter+1, iterations)
+			}
+		}
+
+		t.Logf("=== FINAL RESULTS ===")
+		t.Logf("Total iterations: %d", iterations)
+		t.Logf("Total SELECT queries: %d", totalSelects)
+		t.Logf("Total partial observations: %d", totalPartial)
+
+		require.Equal(t, 0, totalPartial, "No partial data should be observed across all iterations")
+	})
 }
 
 // mustReadSchemaV1 reads schema or fails the test
@@ -169,48 +175,54 @@ func submitSelectV1(apiClient *openapi1.APIClient, ctx context.Context, tableNam
 func TestV1_Stress_ConcurrentCopy(t *testing.T) {
 	RequireInterfaceVersion(t, 1)
 
-	dbClient := DbClientV1(BaseURL)
-	ctx := context.Background()
-
-	// Setup table
-	_ = SetupTestTableV1(t, dbClient, ctx, "stress_rows")
-
-	// Start multiple COPY operations concurrently
-	const numCopies = 3
-	var wg sync.WaitGroup
-	results := make([]bool, numCopies) // true = success, false = failure
-
-	for i := 0; i < numCopies; i++ {
-		i := i
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			results[i] = doCopyV1(t, dbClient, ctx, "stress_rows")
-		}()
+	if DbMemoryBytes <= 0 {
+		t.Skip("Skipping stress test: -db-memory flag not set")
 	}
 
-	wg.Wait()
+	RunTracked(t, "ConcurrentCopy", func(t *testing.T) {
+		dbClient := DbClientV1(BaseURL)
+		ctx := context.Background()
 
-	// Count successes
-	successCount := 0
-	for _, success := range results {
-		if success {
-			successCount++
+		// Setup table
+		_ = SetupTestTableV1(t, dbClient, ctx, "stress_rows")
+
+		// Start multiple COPY operations concurrently
+		const numCopies = 3
+		var wg sync.WaitGroup
+		results := make([]bool, numCopies) // true = success, false = failure
+
+		for i := 0; i < numCopies; i++ {
+			i := i
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				results[i] = doCopyV1(t, dbClient, ctx, "stress_rows")
+			}()
 		}
-	}
 
-	t.Logf("Concurrent COPY results: %d/%d succeeded", successCount, numCopies)
+		wg.Wait()
 
-	// Verify final state - should have consistent number of rows
-	result := ExecuteSelectStarV1(t, dbClient, ctx, "stress_rows")
-	rowCount := CountRowsV1(result)
+		// Count successes
+		successCount := 0
+		for _, success := range results {
+			if success {
+				successCount++
+			}
+		}
 
-	// Row count should be a multiple of stressTableRows (each successful COPY adds 8192 rows)
-	expectedMultiple := rowCount / stressTableRows
-	require.Equal(t, expectedMultiple*stressTableRows, rowCount,
-		"Row count should be a multiple of %d (got %d)", stressTableRows, rowCount)
+		t.Logf("Concurrent COPY results: %d/%d succeeded", successCount, numCopies)
 
-	t.Logf("Final row count: %d (expected multiple of %d)", rowCount, stressTableRows)
+		// Verify final state - should have consistent number of rows
+		result := ExecuteSelectStarV1(t, dbClient, ctx, "stress_rows")
+		rowCount := CountRowsV1(result)
+
+		// Row count should be a multiple of stressTableRows (each successful COPY adds 8192 rows)
+		expectedMultiple := rowCount / stressTableRows
+		require.Equal(t, expectedMultiple*stressTableRows, rowCount,
+			"Row count should be a multiple of %d (got %d)", stressTableRows, rowCount)
+
+		t.Logf("Final row count: %d (expected multiple of %d)", rowCount, stressTableRows)
+	})
 }
 
 // doCopyV1 executes a COPY operation and returns true if successful
