@@ -156,6 +156,33 @@ func LoadTestDataV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.Con
 }
 
 // LoadTestDataV1 loads CSV data into a table using COPY query for v1 client
+func LoadTestDataWithMappingV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, tableName string, columnMapping []string) {
+	dataPath := fmt.Sprintf("/data/tables/%s/data.csv", tableName)
+
+	copyQuery := &openapi1.CopyQuery{
+		SourceFilepath:       dataPath,
+		DestinationTableName: tableName,
+		DestinationColumns:   columnMapping,
+	}
+	doesContainHeader := true
+	copyQuery.DoesCsvContainHeader = &doesContainHeader
+
+	queryDef := openapi1.CopyQueryAsQueryQueryDefinition(copyQuery)
+	req := openapi1.ExecuteQueryRequest{QueryDefinition: queryDef}
+
+	t.Log(pit.FormatRequest("POST", "/query", copyQuery))
+	queryId, resp, err := apiClient.ExecutionAPI.SubmitQuery(ctx).ExecuteQueryRequest(req).Execute()
+	t.Log(pit.FormatResponse(resp))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Wait for COPY to complete
+	query, err := WaitForQueryCompletionV1(apiClient, ctx, queryId, 30*time.Second)
+	require.NoError(t, err, "COPY query should complete")
+	require.Equal(t, openapi1.COMPLETED, query.GetStatus(), "COPY query should succeed")
+}
+
+// LoadTestDataV1 loads CSV data into a table using COPY query for v1 client
 func LoadTestDataHeadlessV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, tableName string) {
 	dataPath := fmt.Sprintf("/data/tables/%s/data-headless.csv", tableName)
 

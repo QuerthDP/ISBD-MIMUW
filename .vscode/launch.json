@@ -62,7 +62,26 @@
                 "true",
                 "-db-image",
                 "${input:dbImage}",
-                "--db-port", "8080",
+                "--db-port", "3000",
+                "--interface-version",
+                "1"
+            ]
+        },
+                      {
+            "name": "Copy_Success_Mapping",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/pit/tests",
+            "args": [
+                "-test.run",
+                "TestV1_Copy/Copy_Success_Mapping",
+                "-test.v",
+                "-db-run-docker",
+                "true",
+                "-db-image",
+                "${input:dbImage}",
+                "--db-port", "3000",
                 "--interface-version",
                 "1"
             ]
@@ -125,15 +144,6 @@
                 "--interface-version",
                 "1"
             ]
-        },
-        {
-            "name": "Connect to server",
-            "type": "go",
-            "request": "attach",
-            "mode": "remote",
-            "remotePath": "${workspaceFolder}",
-            "port": 2345,
-            "host": "127.0.0.1"
         }
     ]
 }
