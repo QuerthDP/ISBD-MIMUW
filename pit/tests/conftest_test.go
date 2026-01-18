@@ -395,7 +395,15 @@ func WaitForQueryCompletion(apiClient *apiclient.APIClient, ctx context.Context,
 
 		status := query.GetStatus()
 		if status == apiclient.COMPLETED || status == apiclient.FAILED {
-
+			// Log error details if query failed
+			if status == apiclient.FAILED {
+				if problems, err := GetQueryError(apiClient, ctx, queryId); err == nil && problems != nil {
+					fmt.Printf("Query %s FAILED with errors:\n", queryId)
+					for _, p := range problems.Problems {
+						fmt.Printf("  - %s\n", p.Error)
+					}
+				}
+			}
 			return query, nil
 		}
 
@@ -418,6 +426,16 @@ func WaitForQueryCompletionWithFlush(apiClient *apiclient.APIClient, ctx context
 
 		status := query.GetStatus()
 		if status == apiclient.COMPLETED || status == apiclient.FAILED {
+			// Log error details if query failed
+			if status == apiclient.FAILED {
+				if problems, err := GetQueryError(apiClient, ctx, queryId); err == nil && problems != nil {
+					fmt.Printf("Query %s FAILED with errors:\n", queryId)
+					for _, p := range problems.Problems {
+						fmt.Printf("  - %s\n", p.Error)
+					}
+				}
+			}
+
 			// Flush result to release DB resources (ignore errors)
 			flushReq := apiclient.GetQueryResultRequest{}
 			flushReq.SetFlushResult(true)
