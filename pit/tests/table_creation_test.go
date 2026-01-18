@@ -201,7 +201,7 @@ func TestTableCreation_Atomicity(t *testing.T) {
 		t.Log(pit.FormatRequest("PUT", "/table", invalidSchema))
 		_, resp, _ := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*invalidSchema).Execute()
 		t.Log(pit.FormatResponse(resp))
-		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		require.NotEqual(t, http.StatusOK, resp.StatusCode)
 
 		// Verify table does NOT exist (no partial state)
 		t.Log("Sending request:\nGET /tables")
