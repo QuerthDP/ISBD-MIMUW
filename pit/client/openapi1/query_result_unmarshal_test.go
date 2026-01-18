@@ -373,6 +373,11 @@ func TestQueryResult_UnmarshalJSON(t *testing.T) {
 			input:   `[{"rowCount": 0, "columns": [[1, 2], []]}]`,
 			wantErr: false,
 		},
+		{
+			name:    "4 empty cols",
+			input:   `{"rowCount":0,"columns":[[],[],[],[]]}`,
+			wantErr: false,
+		},
 
 		// ===== Cases that SHOULD fail =====
 		{
