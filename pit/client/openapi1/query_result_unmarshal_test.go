@@ -283,7 +283,7 @@ func TestQueryResultInner_UnmarshalJSON(t *testing.T) {
 }
 
 func TestQueryResult_UnmarshalJSON(t *testing.T) {
-	// QueryResult is []QueryResultInner
+	// QueryResult accepts both array and single object (hack for broken servers)
 	tests := []struct {
 		name    string
 		input   string
@@ -373,9 +373,16 @@ func TestQueryResult_UnmarshalJSON(t *testing.T) {
 			input:   `[{"rowCount": 0, "columns": [[1, 2], []]}]`,
 			wantErr: false,
 		},
+
+		// ===== Broken server format (single object instead of array) =====
 		{
-			name:    "4 empty cols",
+			name:    "4 empty cols - single object (broken server v1.0.1)",
 			input:   `{"rowCount":0,"columns":[[],[],[],[]]}`,
+			wantErr: false,
+		},
+		{
+			name:    "single object with data (broken server format)",
+			input:   `{"rowCount": 2, "columns": [[1, 2], ["a", "b"]]}`,
 			wantErr: false,
 		},
 
@@ -408,7 +415,7 @@ func TestQueryResult_UnmarshalJSON(t *testing.T) {
 				t.Skip(tt.skip)
 			}
 
-			var result []QueryResultInner
+			var result QueryResult
 			err := json.Unmarshal([]byte(tt.input), &result)
 
 			if tt.wantErr {
