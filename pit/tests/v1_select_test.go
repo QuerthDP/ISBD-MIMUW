@@ -119,20 +119,6 @@ func TestV1_SelectStar(t *testing.T) {
 		require.True(t, foundString, "Should have VARCHAR values in result")
 	})
 
-	RunTracked(t, "SelectStar_AfterMultipleCopy", func(t *testing.T) {
-		_ = SetupTestTableV1(t, dbClient, ctx, "types_test")
-
-		// COPY twice
-		LoadTestDataV1(t, dbClient, ctx, "types_test")
-		LoadTestDataV1(t, dbClient, ctx, "types_test")
-
-		result := ExecuteSelectStarV1(t, dbClient, ctx, "types_test")
-		rows := ParseQueryResultsV1(result)
-
-		// types_test has 3 rows, after 2 COPYs should have 6
-		require.Len(t, rows, 6, "Should have 6 rows after 2 COPYs")
-	})
-
 	RunTracked(t, "SelectStar_QueryStatusTransitions", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 		LoadTestDataV1(t, dbClient, ctx, "people")

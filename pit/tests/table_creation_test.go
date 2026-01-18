@@ -305,7 +305,9 @@ func TestTableCreation_Atomicity(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create with cleanup (cleanup handles 404 if already deleted)
-		tableId := createTableWithCleanup(t, dbClient, ctx, schema)
+		tableId, resp, err := createTable(t, dbClient, ctx, schema, false)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify table is in list
 		t.Log("Sending request:\nGET /tables")
