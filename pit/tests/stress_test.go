@@ -101,6 +101,7 @@ func runStressQuery(t *testing.T, dbClient *apiclient.APIClient, ctx context.Con
 // ============================================================================
 
 func TestStress_SortLargeData(t *testing.T) {
+	RequireInterfaceVersion(t, 2)
 	if DbMemoryBytes <= 0 {
 		t.Skip("Skipping stress test: -db-memory flag not set")
 	}
@@ -135,6 +136,7 @@ func TestStress_SortLargeData(t *testing.T) {
 }
 
 func TestStress_SortLargeData_Descending(t *testing.T) {
+	RequireInterfaceVersion(t, 2)
 	if DbMemoryBytes <= 0 {
 		t.Skip("Skipping stress test: -db-memory flag not set")
 	}
@@ -159,6 +161,7 @@ func TestStress_SortLargeData_Descending(t *testing.T) {
 }
 
 func TestStress_SortMultipleColumns(t *testing.T) {
+	RequireInterfaceVersion(t, 2)
 	if DbMemoryBytes <= 0 {
 		t.Skip("Skipping stress test: -db-memory flag not set")
 	}
@@ -189,6 +192,7 @@ func TestStress_SortMultipleColumns(t *testing.T) {
 // ============================================================================
 
 func TestStress_Incremental(t *testing.T) {
+	RequireInterfaceVersion(t, 2)
 	if DbMemoryBytes <= 0 {
 		t.Skip("Skipping stress test: -db-memory flag not set")
 	}
@@ -234,6 +238,7 @@ func TestStress_Incremental(t *testing.T) {
 // Without CSE: 11 * 0.1 = 1.1x memory needed (exceeds available!)
 // With CSE: only 0.1x memory needed (computed once, reused)
 func TestStress_CSE(t *testing.T) {
+	RequireInterfaceVersion(t, 2)
 	if DbMemoryBytes <= 0 {
 		t.Skip("Skipping stress test: -db-memory flag not set")
 	}
@@ -293,6 +298,7 @@ func TestStress_CSE(t *testing.T) {
 // Without CSE: 10 * 0.1 = 1.0x memory needed (at the limit!)
 // With CSE: only 0.1x memory needed (computed once, reused)
 func TestStress_CSE_SelectOnly(t *testing.T) {
+	RequireInterfaceVersion(t, 2)
 	if DbMemoryBytes <= 0 {
 		t.Skip("Skipping stress test: -db-memory flag not set")
 	}

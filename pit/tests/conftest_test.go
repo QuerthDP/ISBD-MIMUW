@@ -33,14 +33,20 @@ var AsyncMode bool
 // When set > 0, stress tests will try to sort 2x this amount of data
 var DbMemoryBytes int64
 
+// InterfaceVersion controls which interface version tests to run
+// Version 1: Basic interface (Project 3) - COPY, basic SELECT, table operations
+// Version 2: Extended interface (Project 4) - operators, functions, expressions, sorting
+var InterfaceVersion int
+
 // Command-line flags for test configuration
 var (
-	dbImage      = flag.String("db-image", "", "Docker image name (env: DB_IMAGE, default: isbd-mimuw-db:latest)")
-	dbHostname   = flag.String("db-hostname", "", "Hostname of running database (env: DB_HOSTNAME, default: localhost)")
-	dbPort       = flag.String("db-port", "", "Port on which database listens (env: DB_PORT, default: 8080)")
-	dbRunDocker  = flag.String("db-run-docker", "", "Skip docker container and use existing database (env: DB_RUN_DOCKER, default: false)")
-	asyncFlag    = flag.Bool("async", false, "Run tests in async mode: submit all queries first, then wait for results")
-	dbMemoryFlag = flag.Int64("db-memory", 0, "Database available memory in bytes for stress tests (0 = skip stress tests)")
+	dbImage          = flag.String("db-image", "", "Docker image name (env: DB_IMAGE, default: isbd-mimuw-db:latest)")
+	dbHostname       = flag.String("db-hostname", "", "Hostname of running database (env: DB_HOSTNAME, default: localhost)")
+	dbPort           = flag.String("db-port", "", "Port on which database listens (env: DB_PORT, default: 8080)")
+	dbRunDocker      = flag.String("db-run-docker", "", "Skip docker container and use existing database (env: DB_RUN_DOCKER, default: false)")
+	asyncFlag        = flag.Bool("async", false, "Run tests in async mode: submit all queries first, then wait for results")
+	dbMemoryFlag     = flag.Int64("db-memory", 0, "Database available memory in bytes for stress tests (0 = skip stress tests)")
+	interfaceVerFlag = flag.Int("interface-version", 0, "Interface version to test: 1=Project3 (basic), 2=Project4 (extended), 0=all (env: INTERFACE_VERSION)")
 )
 
 func applyFlagToEnv() {
@@ -80,6 +86,17 @@ func TestMain(m *testing.M) {
 		}
 	}
 
+	// Set InterfaceVersion from flag or environment variable
+	// 0 = run all tests, 1 = Project3 (basic), 2 = Project4 (extended)
+	InterfaceVersion = *interfaceVerFlag
+	if InterfaceVersion == 0 {
+		if envVer := os.Getenv("INTERFACE_VERSION"); envVer != "" {
+			if parsed, err := strconv.Atoi(envVer); err == nil {
+				InterfaceVersion = parsed
+			}
+		}
+	}
+
 	ctx := context.Background()
 	base, teardown, err := pit.StartTestContainer(ctx)
 	if err != nil {
@@ -95,6 +112,18 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(code)
+}
+
+// ============================================================================
+// Interface Version Helpers
+// ============================================================================
+
+// RequireInterfaceVersion skips the test if the configured interface version
+// doesn't match the required version. If InterfaceVersion is 0, all tests run.
+func RequireInterfaceVersion(t *testing.T, requiredVersion int) {
+	if InterfaceVersion != 0 && InterfaceVersion != requiredVersion {
+		t.Skipf("Skipping test: requires interface version %d, but running version %d", requiredVersion, InterfaceVersion)
+	}
 }
 
 // ============================================================================
