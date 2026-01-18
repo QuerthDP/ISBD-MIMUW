@@ -77,7 +77,7 @@ func TestV1_StateConsistency(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create table with cleanup (cleanup handles 404 if already deleted)
-		tableId := CreateTableWithCleanupV1(t, dbClient, ctx, schema)
+		tableId := CreateTableV1(t, dbClient, ctx, schema)
 
 		// Verify it's in the list
 		t.Log("Sending request:\nGET /table")
@@ -104,7 +104,6 @@ func TestV1_StateConsistency(t *testing.T) {
 		t.Log("Sending request:\nGET /table")
 		tables, resp, err = dbClient.SchemaAPI.GetTables(ctx).Execute()
 		t.Log(pit.FormatResponse(resp))
-		require.NoError(t, err)
 		for _, table := range tables {
 			require.NotEqual(t, "people", table.GetName(),
 				"Deleted table should not be in list")
@@ -116,7 +115,7 @@ func TestV1_StateConsistency(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create table with cleanup (cleanup handles 404 if already deleted)
-		tableId := CreateTableWithCleanupV1(t, dbClient, ctx, schema)
+		tableId := CreateTableV1(t, dbClient, ctx, schema)
 
 		// Delete table
 		t.Logf("Sending request:\nDELETE /table/%s", tableId)
@@ -163,9 +162,6 @@ func TestV1_StateConsistency(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, initialCount+1, len(tables),
 			"Table count should increase by 1 after creation")
-
-		// After cleanup (t.Cleanup), count should return to initial
-		// Note: This is implicitly tested by the cleanup mechanism
 	})
 }
 

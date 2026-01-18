@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -58,10 +57,6 @@ func ReadTableSchemaV1(tableName string) (*openapi1.TableSchema, error) {
 		columns = append(columns, openapi1.Column{Name: colName, Type: colType})
 	}
 
-	sort.Slice(columns, func(i, j int) bool {
-		return columns[i].Name < columns[j].Name
-	})
-
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("error reading schema file: %w", err)
 	}
@@ -85,10 +80,23 @@ func CreateTableWithCleanupV1(t *testing.T, apiClient *openapi1.APIClient, ctx c
 		t.Log(pit.FormatResponse(resp))
 
 		// 404 is OK - table may have been deleted as part of the test
-		if err != nil || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNotFound) {
+		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Cleanup failed: Could not delete table %s: %v, status: %d", tableId, err, resp.StatusCode)
 		}
 	})
+
+	return tableId
+}
+
+// CreateTableV1 creates a table with custom schema for v1 client
+func CreateTableV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, schema *openapi1.TableSchema) string {
+	t.Log(pit.FormatRequest("PUT", "/table", schema))
+	tableId, resp, err := apiClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+	t.Log(pit.FormatResponse(resp))
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.NotEmpty(t, tableId)
 
 	return tableId
 }
@@ -109,7 +117,7 @@ func SetupTestTableV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.C
 		resp, err := apiClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
 		t.Log(pit.FormatResponse(resp))
 		// 404 is OK - table may have been deleted as part of the test
-		if err != nil || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNotFound) {
+		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Cleanup failed: Could not delete table %s: %v", tableId, err)
 		}
 	})
@@ -130,6 +138,32 @@ func LoadTestDataV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.Con
 		DestinationTableName: tableName,
 	}
 	doesContainHeader := true
+	copyQuery.DoesCsvContainHeader = &doesContainHeader
+
+	queryDef := openapi1.CopyQueryAsQueryQueryDefinition(copyQuery)
+	req := openapi1.ExecuteQueryRequest{QueryDefinition: queryDef}
+
+	t.Log(pit.FormatRequest("POST", "/query", copyQuery))
+	queryId, resp, err := apiClient.ExecutionAPI.SubmitQuery(ctx).ExecuteQueryRequest(req).Execute()
+	t.Log(pit.FormatResponse(resp))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Wait for COPY to complete
+	query, err := WaitForQueryCompletionV1(apiClient, ctx, queryId, 30*time.Second)
+	require.NoError(t, err, "COPY query should complete")
+	require.Equal(t, openapi1.COMPLETED, query.GetStatus(), "COPY query should succeed")
+}
+
+// LoadTestDataV1 loads CSV data into a table using COPY query for v1 client
+func LoadTestDataHeadlessV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, tableName string) {
+	dataPath := fmt.Sprintf("/data/tables/%s/data-headless.csv", tableName)
+
+	copyQuery := &openapi1.CopyQuery{
+		SourceFilepath:       dataPath,
+		DestinationTableName: tableName,
+	}
+	doesContainHeader := false
 	copyQuery.DoesCsvContainHeader = &doesContainHeader
 
 	queryDef := openapi1.CopyQueryAsQueryQueryDefinition(copyQuery)

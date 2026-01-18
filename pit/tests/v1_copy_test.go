@@ -21,11 +21,23 @@ func TestV1_Copy(t *testing.T) {
 	dbClient := DbClientV1(BaseURL)
 	ctx := context.Background()
 
-	RunTracked(t, "Copy_Success", func(t *testing.T) {
+	RunTracked(t, "Copy_Success_Headful", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 
 		// Execute COPY
 		LoadTestDataV1(t, dbClient, ctx, "people")
+
+		// Verify data was loaded
+		result := ExecuteSelectStarV1(t, dbClient, ctx, "people")
+		rows := ParseQueryResultsV1(result)
+		require.Len(t, rows, 5, "Should have 5 rows after COPY")
+	})
+
+	RunTracked(t, "Copy_Success_Headless", func(t *testing.T) {
+		_ = SetupTestTableV1(t, dbClient, ctx, "people")
+
+		// Execute COPY
+		LoadTestDataHeadlessV1(t, dbClient, ctx, "people")
 
 		// Verify data was loaded
 		result := ExecuteSelectStarV1(t, dbClient, ctx, "people")
@@ -99,13 +111,13 @@ func TestV1_Copy(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "types_test")
 
 		// First COPY
-		LoadTestDataV1(t, dbClient, ctx, "types_test")
+		LoadTestDataHeadlessV1(t, dbClient, ctx, "types_test")
 		result1 := ExecuteSelectStarV1(t, dbClient, ctx, "types_test")
 		count1 := CountRowsV1(result1)
 		require.Greater(t, count1, 0, "Should have rows after first COPY")
 
 		// Second COPY - same data
-		LoadTestDataV1(t, dbClient, ctx, "types_test")
+		LoadTestDataHeadlessV1(t, dbClient, ctx, "types_test")
 		result2 := ExecuteSelectStarV1(t, dbClient, ctx, "types_test")
 		count2 := CountRowsV1(result2)
 
