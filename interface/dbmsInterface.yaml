@@ -330,7 +330,7 @@ components:
           description: Character used to separate columns in the CSV file
           type: string
           default: ","
-          
+
     SelectQuery:
       description: Description of a select query
       required:
@@ -444,22 +444,46 @@ components:
 
     Int64Column:
       description: Column containing INT64 values
-      type: array
-      items:
-        type: integer
-        format: int64
+      properties:
+        columnName:
+          type: string
+        type:
+          type: string
+          enum:
+            - INT64
+        values:
+          type: array
+          items:
+            type: integer
+            format: int64
 
     VarcharColumn:
       description: Column containing VARCHAR values
-      type: array
-      items:
-        type: string
+      properties:
+        columnName:
+          type: string
+        type:
+          type: string
+          enum:
+            - VARCHAR
+        values:
+          type: array
+          items:
+            type: string
     
     BooleanColumn:
       description: Column containing BOOLEAN values
-      type: array
-      items:
-        type: boolean
+      properties:
+        columnName:
+          type: string
+        type:
+          type: string
+          enum:
+            - BOOLEAN
+        values:
+          type: array
+          items:
+            type: boolean
 
     QueryResult:
       description: Result of a query execution (plain json data)
