@@ -320,12 +320,14 @@ func SetupTestTable(t *testing.T, apiClient *apiclient.APIClient, ctx context.Co
 	schema, err := ReadTableSchema(tableName)
 	require.NoError(t, err, "Failed to read schema for table %s", tableName)
 
+	t.Log(pit.FormatRequest("PUT", "/table", schema))
 	tableId, resp, err := apiClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
 	t.Log(pit.FormatResponse(resp))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	t.Cleanup(func() {
+		t.Logf("Sending request:\nDELETE /table/%s", tableId)
 		resp, err := apiClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
 		t.Log(pit.FormatResponse(resp))
 		if err != nil || resp.StatusCode != http.StatusOK {
@@ -351,6 +353,7 @@ func LoadTestData(t *testing.T, apiClient *apiclient.APIClient, ctx context.Cont
 	queryDef := apiclient.CopyQueryAsQueryQueryDefinition(copyQuery)
 	req := apiclient.ExecuteQueryRequest{QueryDefinition: queryDef}
 
+	t.Log(pit.FormatRequest("POST", "/query", copyQuery))
 	queryId, resp, err := apiClient.ExecutionAPI.SubmitQuery(ctx).ExecuteQueryRequest(req).Execute()
 	t.Log(pit.FormatResponse(resp))
 	require.NoError(t, err)
@@ -375,6 +378,7 @@ func SubmitSelectQuery(apiClient *apiclient.APIClient, ctx context.Context, sql 
 	queryDef := apiclient.SelectQueryAsQueryQueryDefinition(selectQuery)
 	req := apiclient.ExecuteQueryRequest{QueryDefinition: queryDef}
 
+	fmt.Println(pit.FormatRequest("POST", "/query", selectQuery))
 	return apiClient.ExecutionAPI.SubmitQuery(ctx).ExecuteQueryRequest(req).Execute()
 }
 

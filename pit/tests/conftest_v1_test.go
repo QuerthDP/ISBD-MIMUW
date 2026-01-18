@@ -74,12 +74,14 @@ func SetupTestTableV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.C
 	schema, err := ReadTableSchemaV1(tableName)
 	require.NoError(t, err, "Failed to read schema for table %s", tableName)
 
+	t.Log(pit.FormatRequest("PUT", "/table", schema))
 	tableId, resp, err := apiClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
 	t.Log(pit.FormatResponse(resp))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	t.Cleanup(func() {
+		t.Logf("Sending request:\nDELETE /table/%s", tableId)
 		resp, err := apiClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
 		t.Log(pit.FormatResponse(resp))
 		if err != nil || resp.StatusCode != http.StatusOK {
@@ -108,6 +110,7 @@ func LoadTestDataV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.Con
 	queryDef := openapi1.CopyQueryAsQueryQueryDefinition(copyQuery)
 	req := openapi1.ExecuteQueryRequest{QueryDefinition: queryDef}
 
+	t.Log(pit.FormatRequest("POST", "/query", copyQuery))
 	queryId, resp, err := apiClient.ExecutionAPI.SubmitQuery(ctx).ExecuteQueryRequest(req).Execute()
 	t.Log(pit.FormatResponse(resp))
 	require.NoError(t, err)
@@ -150,7 +153,12 @@ func SubmitSelectStarQueryV1(apiClient *openapi1.APIClient, ctx context.Context,
 
 // ExecuteSelectStarV1 executes SELECT * and returns results for v1 client
 func ExecuteSelectStarV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, tableName string) []openapi1.QueryResultInner {
+	selectQuery := &openapi1.SelectQuery{}
+	selectQuery.SetTableName(tableName)
+
+	t.Log(pit.FormatRequest("POST", "/query", selectQuery))
 	queryId, resp, err := SubmitSelectStarQueryV1(apiClient, ctx, tableName)
+	t.Log(pit.FormatResponse(resp))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -158,6 +166,7 @@ func ExecuteSelectStarV1(t *testing.T, apiClient *openapi1.APIClient, ctx contex
 	require.NoError(t, err)
 	require.Equal(t, openapi1.COMPLETED, query.GetStatus())
 
+	t.Logf("Sending request:\nGET /result/%s", queryId)
 	result, err := GetQueryResultV1(apiClient, ctx, queryId)
 	require.NoError(t, err)
 	return result

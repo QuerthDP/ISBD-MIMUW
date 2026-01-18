@@ -14,6 +14,9 @@ func TestSystemInfo(t *testing.T) {
 
 	RunTracked(t, "SystemInfo", func(t *testing.T) {
 		ctx := context.Background()
+
+		// Log the request
+		t.Log("Sending request:\nGET /system")
 		sysInfo, resp, err := apiClient.MetadataAPI.GetSystemInfo(ctx).Execute()
 
 		// Log the raw HTTP response for debugging / validation

@@ -34,10 +34,13 @@ func TestV1_Copy(t *testing.T) {
 	})
 
 	RunTracked(t, "Copy_ToNonExistentTable_Fails", func(t *testing.T) {
+		t.Log(pit.FormatRequest("POST", "/query", map[string]interface{}{
+			"sourceFilepath": "/data/tables/people/data.csv", "destinationTableName": "non_existent_table_xyz"}))
 		queryId, resp, err := SubmitCopyQueryV1(dbClient, ctx,
 			"/data/tables/people/data.csv",
 			"non_existent_table_xyz",
 			true)
+		t.Log(pit.FormatResponse(resp))
 
 		// May fail at submission (400) or during execution (FAILED)
 		if err == nil && resp.StatusCode == http.StatusOK {
@@ -54,10 +57,13 @@ func TestV1_Copy(t *testing.T) {
 	RunTracked(t, "Copy_WithInvalidPath_Fails", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 
+		t.Log(pit.FormatRequest("POST", "/query", map[string]interface{}{
+			"sourceFilepath": "/nonexistent/path/data.csv", "destinationTableName": "people"}))
 		queryId, resp, err := SubmitCopyQueryV1(dbClient, ctx,
 			"/nonexistent/path/data.csv",
 			"people",
 			true)
+		t.Log(pit.FormatResponse(resp))
 
 		if err == nil && resp.StatusCode == http.StatusOK {
 			query, waitErr := WaitForQueryCompletionV1(dbClient, ctx, queryId, 10*time.Second)
@@ -71,10 +77,13 @@ func TestV1_Copy(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 
 		// Try to COPY from invalid path
+		t.Log(pit.FormatRequest("POST", "/query", map[string]interface{}{
+			"sourceFilepath": "/nonexistent/path/data.csv", "destinationTableName": "people"}))
 		queryId, resp, _ := SubmitCopyQueryV1(dbClient, ctx,
 			"/nonexistent/path/data.csv",
 			"people",
 			true)
+		t.Log(pit.FormatResponse(resp))
 
 		if resp != nil && resp.StatusCode == http.StatusOK {
 			WaitForQueryCompletionV1(dbClient, ctx, queryId, 10*time.Second)
@@ -108,10 +117,13 @@ func TestV1_Copy(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 
 		// COPY with header=true
+		t.Log(pit.FormatRequest("POST", "/query", map[string]interface{}{
+			"sourceFilepath": "/data/tables/people/data.csv", "destinationTableName": "people", "doesCsvContainHeader": true}))
 		queryId, resp, err := SubmitCopyQueryV1(dbClient, ctx,
 			"/data/tables/people/data.csv",
 			"people",
 			true)
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -155,10 +167,13 @@ func TestV1_Copy_Atomicity(t *testing.T) {
 		require.Greater(t, count1, 0, "Should have data after first COPY")
 
 		// Try to COPY from invalid path
+		t.Log(pit.FormatRequest("POST", "/query", map[string]interface{}{
+			"sourceFilepath": "/nonexistent/invalid/path.csv", "destinationTableName": "types_test"}))
 		queryId, resp, _ := SubmitCopyQueryV1(dbClient, ctx,
 			"/nonexistent/invalid/path.csv",
 			"types_test",
 			true)
+		t.Log(pit.FormatResponse(resp))
 
 		if resp != nil && resp.StatusCode == http.StatusOK {
 			WaitForQueryCompletionV1(dbClient, ctx, queryId, 10*time.Second)
@@ -174,14 +189,15 @@ func TestV1_Copy_Atomicity(t *testing.T) {
 	RunTracked(t, "Copy_QueryStatusTransitions", func(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 
+		t.Log(pit.FormatRequest("POST", "/query", map[string]interface{}{
+			"sourceFilepath": "/data/tables/people/data.csv", "destinationTableName": "people", "doesCsvContainHeader": true}))
 		queryId, resp, err := SubmitCopyQueryV1(dbClient, ctx,
 			"/data/tables/people/data.csv",
 			"people",
 			true)
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-
-		t.Log(pit.FormatResponse(resp))
 
 		// Query should eventually complete
 		query, err := WaitForQueryCompletionV1(dbClient, ctx, queryId, 30*time.Second)

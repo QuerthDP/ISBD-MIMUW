@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/smogork/ISBD-MIMUW/pit"
 	openapi1 "github.com/smogork/ISBD-MIMUW/pit/client/openapi1"
 	"github.com/stretchr/testify/require"
 )
@@ -52,7 +53,9 @@ func TestV1_SelectStar(t *testing.T) {
 	})
 
 	RunTracked(t, "SelectStar_NonExistentTable_Fails", func(t *testing.T) {
+		t.Log(pit.FormatRequest("POST", "/query", map[string]interface{}{"tableName": "non_existent_table_xyz"}))
 		queryId, resp, err := SubmitSelectStarQueryV1(dbClient, ctx, "non_existent_table_xyz")
+		t.Log(pit.FormatResponse(resp))
 
 		// May fail at submission (400) or during execution (FAILED)
 		if err == nil && resp.StatusCode == http.StatusOK {
@@ -134,7 +137,9 @@ func TestV1_SelectStar(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 		LoadTestDataV1(t, dbClient, ctx, "people")
 
+		t.Log(pit.FormatRequest("POST", "/query", map[string]interface{}{"tableName": "people"}))
 		queryId, resp, err := SubmitSelectStarQueryV1(dbClient, ctx, "people")
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -148,7 +153,9 @@ func TestV1_SelectStar(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 		LoadTestDataV1(t, dbClient, ctx, "people")
 
+		t.Log(pit.FormatRequest("POST", "/query", map[string]interface{}{"tableName": "people"}))
 		queryId, resp, err := SubmitSelectStarQueryV1(dbClient, ctx, "people")
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -157,6 +164,7 @@ func TestV1_SelectStar(t *testing.T) {
 		require.Equal(t, openapi1.COMPLETED, query.GetStatus())
 
 		// Get result with flush
+		t.Logf("Sending request:\nGET /result/%s", queryId)
 		result, err := GetQueryResultV1(dbClient, ctx, queryId)
 		require.NoError(t, err)
 		require.NotEmpty(t, result)
