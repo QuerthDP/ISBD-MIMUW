@@ -74,28 +74,9 @@ func deleteTable(t *testing.T, apiClient *openapi1.APIClient, ctx context.Contex
 	return resp, err
 }
 
+// createTableWithCleanup is an alias for CreateTableWithCleanupV1 for backward compatibility
 func createTableWithCleanup(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, schema *openapi1.TableSchema) string {
-	// Create table
-	t.Log(pit.FormatRequest("PUT", "/table", schema))
-	tableId, resp, err := apiClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
-	t.Log(pit.FormatResponse(resp))
-
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	require.NotEmpty(t, tableId)
-
-	t.Cleanup(func() {
-		t.Logf("Sending request:\nDELETE /table/%s", tableId)
-		resp, err := apiClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
-		t.Log(pit.FormatResponse(resp))
-
-		// Log error instead of panic
-		if err != nil || resp.StatusCode != http.StatusOK {
-			t.Errorf("Cleanup failed: Could not delete table %s: %v, status: %d", tableId, err, resp.StatusCode)
-		}
-	})
-
-	return tableId
+	return CreateTableWithCleanupV1(t, apiClient, ctx, schema)
 }
 
 func TestTableCreation(t *testing.T) {
@@ -299,18 +280,15 @@ func TestTableCreation_Atomicity(t *testing.T) {
 	})
 
 	RunTracked(t, "DeleteById_NotByName", func(t *testing.T) {
-		// Create a table
+		// Create a table with cleanup
 		schema, err := readPeopleSchema()
 		require.NoError(t, err)
 
-		t.Log(pit.FormatRequest("PUT", "/table", schema))
-		tableId, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
-		t.Log(pit.FormatResponse(resp))
-		require.NoError(t, err)
+		tableId := createTableWithCleanup(t, dbClient, ctx, schema)
 
 		// Try to delete by name instead of ID - should fail
 		t.Log("Sending request:\nDELETE /table/people")
-		resp, _ = dbClient.SchemaAPI.DeleteTable(ctx, "people").Execute()
+		resp, _ := dbClient.SchemaAPI.DeleteTable(ctx, "people").Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 
@@ -320,21 +298,14 @@ func TestTableCreation_Atomicity(t *testing.T) {
 		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-
-		// Cleanup
-		t.Logf("Sending request:\nDELETE /table/%s", tableId)
-		resp, _ = dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
-		t.Log(pit.FormatResponse(resp))
 	})
 
 	RunTracked(t, "AfterDelete_NotInList", func(t *testing.T) {
 		schema, err := readPeopleSchema()
 		require.NoError(t, err)
 
-		t.Log(pit.FormatRequest("PUT", "/table", schema))
-		tableId, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
-		t.Log(pit.FormatResponse(resp))
-		require.NoError(t, err)
+		// Create with cleanup (cleanup handles 404 if already deleted)
+		tableId := createTableWithCleanup(t, dbClient, ctx, schema)
 
 		// Verify table is in list
 		t.Log("Sending request:\nGET /tables")

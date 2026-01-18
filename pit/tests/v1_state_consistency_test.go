@@ -38,17 +38,9 @@ func TestV1_StateConsistency(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
-		// Create again with same name - should succeed
-		t.Log(pit.FormatRequest("PUT", "/table", schema))
-		tableId2, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
-		t.Log(pit.FormatResponse(resp))
-		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		// Create again with same name - should succeed (with cleanup)
+		tableId2 := CreateTableWithCleanupV1(t, dbClient, ctx, schema)
 		require.NotEqual(t, tableId1, tableId2, "New table should have different ID")
-
-		// Cleanup
-		t.Logf("Sending request:\nDELETE /table/%s", tableId2)
-		dbClient.SchemaAPI.DeleteTable(ctx, tableId2).Execute()
 	})
 
 	RunTracked(t, "CopyThenSelect_DataImmediatelyVisible", func(t *testing.T) {
@@ -84,12 +76,8 @@ func TestV1_StateConsistency(t *testing.T) {
 		schema, err := ReadTableSchemaV1("people")
 		require.NoError(t, err)
 
-		// Create table
-		t.Log(pit.FormatRequest("PUT", "/table", schema))
-		tableId, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
-		t.Log(pit.FormatResponse(resp))
-		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		// Create table with cleanup (cleanup handles 404 if already deleted)
+		tableId := CreateTableWithCleanupV1(t, dbClient, ctx, schema)
 
 		// Verify it's in the list
 		t.Log("Sending request:\nGET /table")
@@ -127,16 +115,12 @@ func TestV1_StateConsistency(t *testing.T) {
 		schema, err := ReadTableSchemaV1("people")
 		require.NoError(t, err)
 
-		// Create table
-		t.Log(pit.FormatRequest("PUT", "/table", schema))
-		tableId, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
-		t.Log(pit.FormatResponse(resp))
-		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		// Create table with cleanup (cleanup handles 404 if already deleted)
+		tableId := CreateTableWithCleanupV1(t, dbClient, ctx, schema)
 
 		// Delete table
 		t.Logf("Sending request:\nDELETE /table/%s", tableId)
-		resp, err = dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+		resp, err := dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -224,16 +208,7 @@ func TestV1_TableSchemaConsistency(t *testing.T) {
 			},
 		}
 
-		t.Log(pit.FormatRequest("PUT", "/table", schema))
-		tableId, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
-		t.Log(pit.FormatResponse(resp))
-		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, resp.StatusCode)
-
-		t.Cleanup(func() {
-			t.Logf("Sending request:\nDELETE /table/%s", tableId)
-			dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
-		})
+		tableId := CreateTableWithCleanupV1(t, dbClient, ctx, schema)
 
 		// Get table details
 		t.Logf("Sending request:\nGET /table/%s", tableId)

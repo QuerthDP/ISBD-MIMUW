@@ -69,6 +69,30 @@ func ReadTableSchemaV1(tableName string) (*openapi1.TableSchema, error) {
 	return openapi1.NewTableSchema(tableName, columns), nil
 }
 
+// CreateTableWithCleanupV1 creates a table with custom schema and registers cleanup for v1 client
+func CreateTableWithCleanupV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, schema *openapi1.TableSchema) string {
+	t.Log(pit.FormatRequest("PUT", "/table", schema))
+	tableId, resp, err := apiClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+	t.Log(pit.FormatResponse(resp))
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.NotEmpty(t, tableId)
+
+	t.Cleanup(func() {
+		t.Logf("Sending request:\nDELETE /table/%s", tableId)
+		resp, err := apiClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+		t.Log(pit.FormatResponse(resp))
+
+		// 404 is OK - table may have been deleted as part of the test
+		if err != nil || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNotFound) {
+			t.Errorf("Cleanup failed: Could not delete table %s: %v, status: %d", tableId, err, resp.StatusCode)
+		}
+	})
+
+	return tableId
+}
+
 // SetupTestTableV1 creates a table and registers cleanup for v1 client
 func SetupTestTableV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, tableName string) string {
 	schema, err := ReadTableSchemaV1(tableName)
@@ -84,7 +108,8 @@ func SetupTestTableV1(t *testing.T, apiClient *openapi1.APIClient, ctx context.C
 		t.Logf("Sending request:\nDELETE /table/%s", tableId)
 		resp, err := apiClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
 		t.Log(pit.FormatResponse(resp))
-		if err != nil || resp.StatusCode != http.StatusOK {
+		// 404 is OK - table may have been deleted as part of the test
+		if err != nil || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNotFound) {
 			t.Errorf("Cleanup failed: Could not delete table %s: %v", tableId, err)
 		}
 	})

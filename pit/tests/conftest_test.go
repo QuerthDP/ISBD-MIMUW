@@ -330,7 +330,8 @@ func SetupTestTable(t *testing.T, apiClient *apiclient.APIClient, ctx context.Co
 		t.Logf("Sending request:\nDELETE /table/%s", tableId)
 		resp, err := apiClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
 		t.Log(pit.FormatResponse(resp))
-		if err != nil || resp.StatusCode != http.StatusOK {
+		// 404 is OK - table may have been deleted as part of the test
+		if err != nil || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNotFound) {
 			t.Errorf("Cleanup failed: Could not delete table %s: %v", tableId, err)
 		}
 	})
