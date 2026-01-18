@@ -147,7 +147,7 @@ func parameterValueToString(obj interface{}, key string) string {
 		return ""
 	}
 	s := fmt.Sprintf("%v", dataMap[key])
-	return strings.Trim(s, "\"")
+	return strings.Trim(strings.Trim(s, "\n"), "\"")
 }
 
 // parameterAddToHeaderOrQuery adds the provided object to the request header or url query
@@ -437,7 +437,7 @@ func (c *APIClient) decode(v interface{}, b []byte, contentType string) (err err
 		return nil
 	}
 	if s, ok := v.(*string); ok {
-		*s = strings.Trim(string(b), "\"")
+		*s = strings.Trim(strings.Trim(string(b), "\n"), "\"")
 		return nil
 	}
 	if f, ok := v.(*os.File); ok {
