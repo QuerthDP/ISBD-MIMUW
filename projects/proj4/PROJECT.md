@@ -71,8 +71,9 @@ Do zaimplementowania są następujące operatory:
 Do zaimplementowania są następujące funkcje:
 1. `STRLEN` - przyjmuje jeden argument typu `VARCHAR` i zwraca liczbę całkowitą oznaczającą ilość znaków w napisie (zakładamy tylko znaki ASCII).
 2. `CONCAT` - przyjmuje dwa argumenty typu `VARCHAR` i zwraca wartość typu `VARCHAR`, która jest połączeniem dwóch wejściowych napisów.
-3. `UPPER` - przyjmuje jeden argument typu `VARCHAR` i zwraca napis z przekształconymi literami małymi w wielkie (zakładamy tylko znaki ASCII).
-4. `LOWER` - przyjmuje jeden argument typu `VARCHAR` i zwraca napis z przekształconymi literami wielkimi w małe (zakładamy tylko znaki ASCII).
+3. `REPLACE` - przyjmuje 3 argumenty typu `VARCHAR` (`source`, `old`, `new`) i zwraca wartość typu `VARCHAR`. Wynikiem działania funkcji jest zamiana wszystkich wystąpień `old` w ciągu `source` na `new`.
+4. `UPPER` - przyjmuje jeden argument typu `VARCHAR` i zwraca napis z przekształconymi literami małymi w wielkie (zakładamy tylko znaki ASCII).
+5. `LOWER` - przyjmuje jeden argument typu `VARCHAR` i zwraca napis z przekształconymi literami wielkimi w małe (zakładamy tylko znaki ASCII).
 
 #### Przykłady wyrażeń kolumnowych
 

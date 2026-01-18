@@ -55,11 +55,6 @@ func guessTableNames(cols []openapi.ColumnExpression, from []string) ([]openapi.
 
 // buildQuery constructs an openapi.SelectQuery from parsed components
 func buildQuery(columns, from, where, orderBy, limit interface{}) (*openapi.SelectQuery, error) {
-
-	if from == nil {
-		return nil, fmt.Errorf("FROM clause is required")
-	}
-
 	guessedColRefences, err := guessTableNames(columns.([]openapi.ColumnExpression), from.([]string))
 	if err != nil {
 		return nil, err

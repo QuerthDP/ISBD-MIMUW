@@ -15,7 +15,7 @@
 //   - Arithmetic operators: +, -, *, /
 //   - Comparison operators: =, <>, !=, <, <=, >, >=
 //   - Logical operators: AND, OR, NOT
-//   - Functions: STRLEN, CONCAT, UPPER, LOWER
+//   - Functions: STRLEN, CONCAT, REPLACE, UPPER, LOWER
 //   - Literals: integers, strings, TRUE, FALSE
 //   - Column references: column or table.column
 
@@ -30,7 +30,11 @@ import (
 // Entry Point
 // ============================================================================
 
-Query <- _ SELECT_K _ columns:ColumnList from:FromClause where:WhereClause? 
+// When FROM is missing => return error
+Query <- _ SELECT_K _ columns:ColumnList _ EOF {
+    return nil, fmt.Errorf("FROM clause is required")
+}
+/ _ SELECT_K _ columns:ColumnList from:FromClause where:WhereClause? 
          orderBy:OrderByClause? limit:LimitClause? _ ';'? _ EOF {
     return buildQuery(columns, from, where, orderBy, limit)
 }
@@ -141,7 +145,7 @@ FunctionCall <- name:FunctionName _ '(' _ args:FunctionArgs? _ ')' {
     return buildFunction(name, args), nil
 }
 
-FunctionName <- ( "STRLEN"i / "CONCAT"i / "UPPER"i / "LOWER"i ) {
+FunctionName <- ( "STRLEN"i / "CONCAT"i / "UPPER"i / "LOWER"i / "REPLACE"i ) {
     return string(c.text), nil
 }
 
@@ -174,6 +178,7 @@ FALSE_K  <- "FALSE"i  ![a-zA-Z0-9_] { return string(c.text), nil }
 
 STRLEN_K <- "STRLEN"i ![a-zA-Z0-9_] { return string(c.text), nil }
 CONCAT_K <- "CONCAT"i ![a-zA-Z0-9_] { return string(c.text), nil }
+REPLACE_K <- "REPLACE"i ![a-zA-Z0-9_] { return string(c.text), nil }
 UPPER_K  <- "UPPER"i  ![a-zA-Z0-9_] { return string(c.text), nil }
 LOWER_K  <- "LOWER"i  ![a-zA-Z0-9_] { return string(c.text), nil }
 
@@ -183,7 +188,7 @@ Identifier <- !ReservedWord [a-zA-Z_] [a-zA-Z0-9_]* {
 
 ReservedWord <- ( SELECT_K / FROM_K / WHERE_K / ORDER_K / BY_K / ASC_K / DESC_K / 
                  LIMIT_K / AND_K / OR_K / NOT_K / TRUE_K / FALSE_K /
-                 STRLEN_K / CONCAT_K / UPPER_K / LOWER_K )
+                 STRLEN_K / CONCAT_K / UPPER_K / LOWER_K / REPLACE_K )
 
 Integer <- [0-9]+ {
     return parseInt(string(c.text)), nil

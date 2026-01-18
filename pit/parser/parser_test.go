@@ -122,14 +122,14 @@ func TestParseOrderByAndLimit(t *testing.T) {
 }
 
 func TestParseFunctions(t *testing.T) {
-	input := "SELECT UPPER(name), STRLEN(description), CONCAT(a, b) FROM t1"
+	input := "SELECT UPPER(name), STRLEN(description), CONCAT(a, b), REPLACE(c, 'old', 'new') FROM t1"
 	query, err := ParseSQL(input)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if len(query.ColumnClauses) != 3 {
-		t.Errorf("expected 3 column clauses, got %d", len(query.ColumnClauses))
+	if len(query.ColumnClauses) != 4 {
+		t.Errorf("expected 4 column clauses, got %d", len(query.ColumnClauses))
 		return
 	}
 
@@ -157,6 +157,19 @@ func TestParseFunctions(t *testing.T) {
 		}
 		if len(f.Arguments) != 2 {
 			t.Errorf("expected 2 arguments for CONCAT, got %d", len(f.Arguments))
+		}
+	}
+
+	// Fourth: REPLACE(c, 'old', 'new')
+	if query.ColumnClauses[3].Function == nil {
+		t.Error("expected Function for fourth column")
+	} else {
+		f := query.ColumnClauses[3].Function
+		if *f.FunctionName != "REPLACE" {
+			t.Errorf("expected REPLACE function, got %s", *f.FunctionName)
+		}
+		if len(f.Arguments) != 3 {
+			t.Errorf("expected 3 arguments for REPLACE, got %d", len(f.Arguments))
 		}
 	}
 }
