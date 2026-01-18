@@ -39,6 +39,21 @@ func ArrayOfStringAsQueryResultInnerColumnsInner(v *[]string) QueryResultInnerCo
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *QueryResultInnerColumnsInner) UnmarshalJSON(data []byte) error {
+	// Handle edge cases for empty columns (e.g., when rowCount is 0)
+	strData := string(data)
+	if strData == "[]" {
+		// Empty array - default to string array to avoid "matches both schemas" error
+		empty := make([]string, 0)
+		dst.ArrayOfString = &empty
+		return nil
+	}
+	if strData == "{}" {
+		// Empty object - treat as empty column (no data)
+		empty := make([]string, 0)
+		dst.ArrayOfString = &empty
+		return nil
+	}
+
 	var err error
 	match := 0
 	// try to unmarshal data into ArrayOfInt64
