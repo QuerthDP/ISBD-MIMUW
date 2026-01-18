@@ -217,8 +217,8 @@ func TestV1_Stress_ConcurrentCopy(t *testing.T) {
 		rowCount := CountRowsV1(result)
 
 		// Row count should be a multiple of stressTableRows (each successful COPY adds 8192 rows)
-		expectedMultiple := rowCount / stressTableRows
-		require.Equal(t, expectedMultiple*stressTableRows, rowCount,
+
+		require.Equal(t, numCopies*stressTableRows, rowCount,
 			"Row count should be a multiple of %d (got %d)", stressTableRows, rowCount)
 
 		t.Logf("Final row count: %d (expected multiple of %d)", rowCount, stressTableRows)
