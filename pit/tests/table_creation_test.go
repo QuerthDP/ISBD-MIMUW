@@ -12,11 +12,11 @@ import (
 	"testing"
 
 	"github.com/smogork/ISBD-MIMUW/pit"
-	apiclient "github.com/smogork/ISBD-MIMUW/pit/client/openapi2"
+	openapi1 "github.com/smogork/ISBD-MIMUW/pit/client/openapi1"
 	"github.com/stretchr/testify/require"
 )
 
-func readPeopleSchema() (*apiclient.TableSchema, error) {
+func readPeopleSchema() (*openapi1.TableSchema, error) {
 	// Get the path to the schema file
 	schemaPath := filepath.Join("..", "tables", "people", "schema.txt")
 	file, err := os.Open(schemaPath)
@@ -25,7 +25,7 @@ func readPeopleSchema() (*apiclient.TableSchema, error) {
 	}
 	defer file.Close()
 
-	var columns []apiclient.Column
+	var columns []openapi1.Column
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -39,8 +39,8 @@ func readPeopleSchema() (*apiclient.TableSchema, error) {
 		}
 
 		colName := parts[0]
-		colType := apiclient.LogicalColumnType(parts[1])
-		columns = append(columns, apiclient.Column{Name: colName, Type: colType})
+		colType := openapi1.LogicalColumnType(parts[1])
+		columns = append(columns, openapi1.Column{Name: colName, Type: colType})
 	}
 
 	sort.Slice(columns, func(i, j int) bool {
@@ -51,10 +51,10 @@ func readPeopleSchema() (*apiclient.TableSchema, error) {
 		return nil, fmt.Errorf("error reading schema file: %w", err)
 	}
 
-	return apiclient.NewTableSchema("people", columns), nil
+	return openapi1.NewTableSchema("people", columns), nil
 }
 
-func createTable(t *testing.T, apiClient *apiclient.APIClient, ctx context.Context, tableSchema *apiclient.TableSchema, mayFail bool) (string, *http.Response, error) {
+func createTable(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, tableSchema *openapi1.TableSchema, mayFail bool) (string, *http.Response, error) {
 	tableId, resp, err := apiClient.SchemaAPI.CreateTable(ctx).TableSchema(*tableSchema).Execute()
 	t.Log(pit.FormatResponse(resp))
 	if !mayFail {
@@ -64,7 +64,7 @@ func createTable(t *testing.T, apiClient *apiclient.APIClient, ctx context.Conte
 	return tableId, resp, err
 }
 
-func deleteTable(t *testing.T, apiClient *apiclient.APIClient, ctx context.Context, tableId string) (*http.Response, error) {
+func deleteTable(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, tableId string) (*http.Response, error) {
 	resp, err := apiClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
 	t.Log(pit.FormatResponse(resp))
 	require.NoError(t, err)
@@ -72,7 +72,7 @@ func deleteTable(t *testing.T, apiClient *apiclient.APIClient, ctx context.Conte
 	return resp, err
 }
 
-func createTableWithCleanup(t *testing.T, apiClient *apiclient.APIClient, ctx context.Context, schema *apiclient.TableSchema) string {
+func createTableWithCleanup(t *testing.T, apiClient *openapi1.APIClient, ctx context.Context, schema *openapi1.TableSchema) string {
 	// Create table
 	tableId, resp, err := apiClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
 
@@ -97,7 +97,7 @@ func createTableWithCleanup(t *testing.T, apiClient *apiclient.APIClient, ctx co
 }
 
 func TestTableCreation(t *testing.T) {
-	dbClient := pit.DbClient(BaseURL)
+	dbClient := pit.DbClient1(BaseURL)
 	ctx := context.Background()
 
 	// Read the people table schema from file

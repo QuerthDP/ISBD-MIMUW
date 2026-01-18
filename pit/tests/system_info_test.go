@@ -10,7 +10,7 @@ import (
 )
 
 func TestSystemInfo(t *testing.T) {
-	apiClient := pit.DbClient(BaseURL)
+	apiClient := pit.DbClient1(BaseURL)
 
 	t.Run("SystemInfo", func(t *testing.T) {
 		ctx := context.Background()
