@@ -366,7 +366,7 @@ func (r ApiGetQueryResultRequest) GetQueryResultRequest(getQueryResultRequest Ge
 	return r
 }
 
-func (r ApiGetQueryResultRequest) Execute() ([]QueryResultInner, *http.Response, error) {
+func (r ApiGetQueryResultRequest) Execute() (QueryResult, *http.Response, error) {
 	return r.ApiService.GetQueryResultExecute(r)
 }
 
@@ -386,13 +386,13 @@ func (a *ExecutionAPIService) GetQueryResult(ctx context.Context, queryId string
 }
 
 // Execute executes the request
-//  @return []QueryResultInner
-func (a *ExecutionAPIService) GetQueryResultExecute(r ApiGetQueryResultRequest) ([]QueryResultInner, *http.Response, error) {
+//  @return QueryResult
+func (a *ExecutionAPIService) GetQueryResultExecute(r ApiGetQueryResultRequest) (QueryResult, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  []QueryResultInner
+		localVarReturnValue  QueryResult
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ExecutionAPIService.GetQueryResult")
