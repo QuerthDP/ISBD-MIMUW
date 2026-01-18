@@ -3,7 +3,7 @@ info:
   title: MIMUW ISBD database system
   description: |-
     This file describes interface between DBMS system and user.
-  version: 2.1.0
+  version: 2.0.0
 tags:
   - name: schema
     description: Endpoints used to access schema structure
@@ -326,10 +326,6 @@ components:
           description: Whether CSV file contains header row
           type: boolean
           default: false
-        columnSeparator:
-          description: Character used to separate columns in the CSV file
-          type: string
-          default: ","
 
     SelectQuery:
       description: Description of a select query
@@ -403,7 +399,6 @@ components:
           enum:
             - STRLEN
             - CONCAT
-            - REPLACE
             - UPPER
             - LOWER
         arguments:
@@ -445,46 +440,22 @@ components:
 
     Int64Column:
       description: Column containing INT64 values
-      properties:
-        columnName:
-          type: string
-        type:
-          type: string
-          enum:
-            - INT64
-        values:
-          type: array
-          items:
-            type: integer
-            format: int64
+      type: array
+      items:
+        type: integer
+        format: int64
 
     VarcharColumn:
       description: Column containing VARCHAR values
-      properties:
-        columnName:
-          type: string
-        type:
-          type: string
-          enum:
-            - VARCHAR
-        values:
-          type: array
-          items:
-            type: string
+      type: array
+      items:
+        type: string
     
     BooleanColumn:
       description: Column containing BOOLEAN values
-      properties:
-        columnName:
-          type: string
-        type:
-          type: string
-          enum:
-            - BOOLEAN
-        values:
-          type: array
-          items:
-            type: boolean
+      type: array
+      items:
+        type: boolean
 
     QueryResult:
       description: Result of a query execution (plain json data)
