@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	apiclient "github.com/smogork/ISBD-MIMUW/pit/client"
+	apiclient "github.com/smogork/ISBD-MIMUW/pit/client/openapi2"
 	"github.com/docker/go-connections/nat"
 	tc "github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"

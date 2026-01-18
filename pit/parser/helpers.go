@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	openapi "github.com/smogork/ISBD-MIMUW/pit/client"
+	openapi "github.com/smogork/ISBD-MIMUW/pit/client/openapi2"
 )
 
 // Modify in place the ColumnReferenceExpressions in colExpr to fill in missing table names

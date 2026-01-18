@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/smogork/ISBD-MIMUW/pit"
-	apiclient "github.com/smogork/ISBD-MIMUW/pit/client"
+	apiclient "github.com/smogork/ISBD-MIMUW/pit/client/openapi2"
 	"github.com/stretchr/testify/require"
 )
 

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	apiclient "github.com/smogork/ISBD-MIMUW/pit/client"
+	apiclient "github.com/smogork/ISBD-MIMUW/pit/client/openapi2"
 	"github.com/stretchr/testify/require"
 )
 
