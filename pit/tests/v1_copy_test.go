@@ -41,16 +41,16 @@ func TestV1_Copy(t *testing.T) {
 	// (removed unused helper)
 
 	RunTracked(t, "Copy_Success_Mapping", func(t *testing.T) {
-		_ = SetupTestTableV1(t, dbClient, ctx, "people-mixed")
+		_ = SetupTestTableV1(t, dbClient, ctx, "peoplemixed")
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 
 		// Execute COPY
 		LoadTestDataV1(t, dbClient, ctx, "people")
-		LoadTestDataWithMappingV1(t, dbClient, ctx, "people-mixed", []string{"id", "name", "surname", "age"})
+		LoadTestDataWithMappingV1(t, dbClient, ctx, "peoplemixed", []string{"id", "name", "surname", "age"})
 
 		// Verify data was loaded
 		resultNormal := ExecuteSelectStarV1(t, dbClient, ctx, "people")
-		resultMixed := ExecuteSelectStarV1(t, dbClient, ctx, "people-mixed")
+		resultMixed := ExecuteSelectStarV1(t, dbClient, ctx, "peoplemixed")
 		rowsNormal := ParseQueryResultsV1(resultNormal)
 		rowsMixed := ParseQueryResultsV1(resultMixed)
 
