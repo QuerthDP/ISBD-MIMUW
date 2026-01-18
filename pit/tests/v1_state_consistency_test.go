@@ -25,18 +25,21 @@ func TestV1_StateConsistency(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create first time
+		t.Log(pit.FormatRequest("PUT", "/table", schema))
 		tableId1, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Delete
+		t.Logf("Sending request:\nDELETE /table/%s", tableId1)
 		resp, err = dbClient.SchemaAPI.DeleteTable(ctx, tableId1).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Create again with same name - should succeed
+		t.Log(pit.FormatRequest("PUT", "/table", schema))
 		tableId2, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
@@ -44,6 +47,7 @@ func TestV1_StateConsistency(t *testing.T) {
 		require.NotEqual(t, tableId1, tableId2, "New table should have different ID")
 
 		// Cleanup
+		t.Logf("Sending request:\nDELETE /table/%s", tableId2)
 		dbClient.SchemaAPI.DeleteTable(ctx, tableId2).Execute()
 	})
 
@@ -81,12 +85,16 @@ func TestV1_StateConsistency(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create table
+		t.Log(pit.FormatRequest("PUT", "/table", schema))
 		tableId, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify it's in the list
+		t.Log("Sending request:\nGET /table")
 		tables, resp, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		found := false
 		for _, table := range tables {
@@ -98,12 +106,16 @@ func TestV1_StateConsistency(t *testing.T) {
 		require.True(t, found, "Table should be in list after creation")
 
 		// Delete table
+		t.Logf("Sending request:\nDELETE /table/%s", tableId)
 		resp, err = dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Verify it's NOT in the list
+		t.Log("Sending request:\nGET /table")
 		tables, resp, err = dbClient.SchemaAPI.GetTables(ctx).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		for _, table := range tables {
 			require.NotEqual(t, "people", table.GetName(),
@@ -116,17 +128,23 @@ func TestV1_StateConsistency(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create table
+		t.Log(pit.FormatRequest("PUT", "/table", schema))
 		tableId, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Delete table
+		t.Logf("Sending request:\nDELETE /table/%s", tableId)
 		resp, err = dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Try to get details - should fail
+		t.Logf("Sending request:\nGET /table/%s", tableId)
 		_, resp, _ = dbClient.SchemaAPI.GetTableById(ctx, tableId).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.Equal(t, http.StatusNotFound, resp.StatusCode,
 			"Deleted table details should return 404")
 	})
@@ -145,7 +163,9 @@ func TestV1_StateConsistency(t *testing.T) {
 
 	RunTracked(t, "TableListConsistency", func(t *testing.T) {
 		// Get initial table count
-		initialTables, _, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		t.Log("Sending request:\nGET /table")
+		initialTables, resp, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		initialCount := len(initialTables)
 
@@ -153,7 +173,9 @@ func TestV1_StateConsistency(t *testing.T) {
 		_ = SetupTestTableV1(t, dbClient, ctx, "people")
 
 		// Verify count increased
-		tables, _, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		t.Log("Sending request:\nGET /table")
+		tables, resp, err := dbClient.SchemaAPI.GetTables(ctx).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, initialCount+1, len(tables),
 			"Table count should increase by 1 after creation")
@@ -180,6 +202,7 @@ func TestV1_TableSchemaConsistency(t *testing.T) {
 		tableId := SetupTestTableV1(t, dbClient, ctx, "people")
 
 		// Get table details
+		t.Logf("Sending request:\nGET /table/%s", tableId)
 		details, resp, err := dbClient.SchemaAPI.GetTableById(ctx, tableId).Execute()
 		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
@@ -201,16 +224,21 @@ func TestV1_TableSchemaConsistency(t *testing.T) {
 			},
 		}
 
+		t.Log(pit.FormatRequest("PUT", "/table", schema))
 		tableId, resp, err := dbClient.SchemaAPI.CreateTable(ctx).TableSchema(*schema).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		t.Cleanup(func() {
+			t.Logf("Sending request:\nDELETE /table/%s", tableId)
 			dbClient.SchemaAPI.DeleteTable(ctx, tableId).Execute()
 		})
 
 		// Get table details
-		details, _, err := dbClient.SchemaAPI.GetTableById(ctx, tableId).Execute()
+		t.Logf("Sending request:\nGET /table/%s", tableId)
+		details, resp, err := dbClient.SchemaAPI.GetTableById(ctx, tableId).Execute()
+		t.Log(pit.FormatResponse(resp))
 		require.NoError(t, err)
 
 		// Find columns and verify types
